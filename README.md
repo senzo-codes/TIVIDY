@@ -1,10 +1,12 @@
-                                                                      ⚙️ TIVIDY - Generic Workflow Management System
+                                                      ⚙️ TIVIDY - Generic Workflow Management System
 
 📌 Executive Overview
 TIVIDY is an extensible, enterprise grade Workflow Management System designed to define, model, execute, and monitor complex organizational processes.   
-In modern organizations, work rarely consists of isolated tasks; it moves through structured pipelines involving multiple human participants, automated systems, decision gates, conditional approvals, and external dependencies. 
+In modern organizations, work rarely consists of isolated tasks; it moves through structured pipelines involving multiple human participants, automated systems, 
+decision gates, conditional approvals, and external dependencies. 
 Without a centralized engine, these processes devolve into fragmented email chains, spreadsheets, and manual interventions. 
-TIVIDY solves this by providing a generic execution engine that enforces business rules, automates work routing, tracks real-time progress, maintains audit trails, and handles failures cleanly.
+TIVIDY solves this by providing a generic execution engine that enforces business rules, automates work routing, tracks real-time progress, maintains audit 
+trails, and handles failures cleanly.
 
 🛠️ Software Engineering & GoF Design Patterns
 TIVIDY is engineered in C++11 following object-oriented design principles and standard Gang of Four (GoF) design patterns to eliminate large if/else or switch statements and ensure system flexibility:
@@ -22,4 +24,5 @@ TIVIDY is engineered in C++11 following object-oriented design principles and st
 
 🧪 Demonstration Scenario
 To validate that the generic workflow engine functions effectively in a real-world setting, TIVIDY is demonstrated through a concrete organizational process scenario. 
-The demonstration scenario exercises all core engine features—including multi-level approvals, conditional routing, system integrations, and task escalations—proving the versatility and robustness of the generic system.
+The demonstration scenario exercises all core engine features—including multi-level approvals, conditional routing, system integrations, and task escalations—proving the 
+versatility and robustness of the generic system.
