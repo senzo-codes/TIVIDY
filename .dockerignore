@@ -1,0 +1,3 @@
+# DON'T WANT TO INCLUDE THOSE VPP_BAK YADA YADA FILES
+*.vpp.bak_*
+*.vpp.lck
