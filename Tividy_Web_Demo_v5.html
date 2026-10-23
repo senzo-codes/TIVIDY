@@ -55,6 +55,13 @@ small,.meta{color:var(--muted)}
 .tag.st-done{color:var(--done);border-color:var(--done)}
 .tag.late,.tag.soon{color:var(--warn);border-color:var(--warn)}
 .empty{color:var(--muted);padding:10px 0}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:30;padding:16px}
+#modal.hide{display:none}
+#modal .mbox{position:relative;background:var(--surface);color:var(--ink);border-radius:10px;max-width:480px;width:100%;max-height:85vh;overflow:auto;padding:18px 20px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#modal #modalClose{position:absolute;top:8px;right:10px}
+#modal h4{margin:14px 0 6px;font-size:14px}
+#modal th{text-align:left;padding:4px 10px 4px 0;color:var(--muted);font-weight:400;white-space:nowrap}
+#modal td{padding:4px 0}
 .snapbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .snap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
 .alert{border:1px solid var(--warn);color:var(--warn);border-radius:6px;padding:8px 12px;margin:10px 0;font-size:14px}
@@ -93,6 +100,7 @@ table.def th,table.def td{text-align:left;padding:4px 6px;border-bottom:1px soli
         <div class="add"><input id="wfName" placeholder="New workflow name" aria-label="Workflow name"><button class="primary" id="wfAdd">Create</button></div>
         <div id="wfList"></div>
       </div>
+      <div class="panel" id="inputsCard" style="margin-top:12px"></div>
     </div>
     <div class="panel" id="main"></div>
   </div>
@@ -103,6 +111,7 @@ table.def th,table.def td{text-align:left;padding:4px 6px;border-bottom:1px soli
   </div>
 </div>
 <div id="tip" class="hide" role="tooltip"></div>
+<div id="modal" class="hide" role="dialog" aria-modal="true"><div class="mbox"><button id="modalClose" aria-label="Close">×</button><div id="modalBody"></div></div></div>
 
 <script>
 var KEY = "tividy-admin-v2";
@@ -357,25 +366,80 @@ function renderDash() {
       : s === "cancelled" ? '<span class="meta">Cancelled</span>' : 
          (hasAuth ? '<select data-st="' + t.id + '" data-wf="' + w.id + '" aria-label="Status">' + ["todo", "doing", "done"].map(function (k) { return '<option value="' + k + '"' + (k === s ? " selected" : "") + ">" + LABEL[k] + "</option>"; }).join("") + "</select>" : authMsg);
     
-    return '<div class="task st-' + s + (t.priority ? " prio" : "") + '"><div class="t"><div class="n">' + esc(t.name) + tags(t, s) + '</div><div class="meta">' + esc(w.name) + (t.due ? " · due " + esc(t.due) : "") + (par ? " · part of " + esc(par.name) : "") + "</div></div>" + ctl + reqBtn(w, t, s) + "</div>";
+    return '<div class="task st-' + s + (t.priority ? " prio" : "") + '" data-task="' + w.id + ':' + t.id + '"><div class="t"><div class="n">' + esc(t.name) + tags(t, s) + '</div><div class="meta">' + esc(w.name) + (t.due ? " · due " + esc(t.due) : "") + (par ? " · part of " + esc(par.name) : "") + "</div></div>" + ctl + reqBtn(w, t, s) + "</div>";
   }).join("");
   $("dash").innerHTML = html;
 }
 
 /* ---------- Workflow definition (data) and running instances ---------- */
+/* Guards are "field=value" (or "any"). A field that is not set yet does not block creating a task;
+   the guard decides the next status when the task completes. */
+function guardOk(guard, data) {
+  if (!guard || guard === "any") return true;
+  var i = guard.indexOf("="); if (i < 0) return false;
+  var cur = (data || {})[guard.slice(0, i)];
+  return cur === undefined || cur === "" || cur === guard.slice(i + 1);
+}
+function matchOk(guard, data) {
+  if (!guard || guard === "any") return true;
+  var i = guard.indexOf("="); if (i < 0) return false;
+  return ((data || {})[guard.slice(0, i)] || "") === guard.slice(i + 1);
+}
+
+/* Input data fields are defined per workflow in the Admin tab (w.inputs). Values are typed in when an instance starts. */
+function readInputs(w) {
+  var data = {};
+  ((w && w.inputs) || []).forEach(function (f, i) {
+    var el = $("in_" + i), v = el ? el.value.trim() : "";
+    if (v) data[f.key] = v;
+  });
+  return data;
+}
+function startFormHtml(w) {
+  var list = (w && w.inputs) || [];
+  if (!list.length) return '<div class="meta">Add input data fields on the left first. You then type their values in here when you start an instance.</div>';
+  return '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0">' + list.map(function (f, i) {
+    return '<input id="in_' + i + '" placeholder="' + esc(f.key) + '" aria-label="' + esc(f.key) + '" style="flex:1;min-width:140px">';
+  }).join("") + "</div>";
+}
+function inputsHtml(w) {
+  if (!w) return '<h2>Input data</h2><div class="empty">Create a workflow first.</div>';
+  var list = w.inputs || [];
+  return '<h2>Input data <button class="i" data-pat="instance" aria-label="Design pattern info">i</button></h2>' +
+    '<div class="meta">The fields each case needs. Guards read them by name, for example fraudFlag=yes. Values are typed in when you start an instance.</div>' +
+    (list.length ? list.map(function (f, i) {
+      return '<div class="task"><div class="t"><b>' + esc(f.key) + '</b></div><button class="x" data-infdel="' + i + '" aria-label="Remove field">×</button></div>';
+    }).join("") : '<div class="empty">No input fields yet.</div>') +
+    '<div class="add"><input id="inKey" placeholder="Field name, e.g. policyNumber" aria-label="Field name"><button class="primary" id="inAdd">Add field</button></div>';
+}
+
 var EXAMPLE = [["Registered", "Verify policy", "Verified", 1, "any", 2], ["Registered", "Reject claim", "Rejected", 2, "any", 2],
   ["Verified", "Assess damage", "Assessed", 2, "any", 3, ["Inspect vehicle", "Estimate repair cost"]],
-  ["Assessed", "Auto fraud check", "Under Investigation", 0, "flag", 0],
+  ["Assessed", "Auto fraud check", "Under Investigation", 0, "fraudFlag=yes", 0],
   ["Assessed", "Review claim", "Approved", 2, "any", 2],
   ["Under Investigation", "Clear claim", "Approved", 3, "any", 5], ["Under Investigation", "Reject claim", "Rejected", 3, "any", 5],
   ["Approved", "Pay claim", "Paid", 3, "any", 5]];
 var ADMIT = [["Submitted", "Check documents", "Under Review", 1, "any", 2, ["Verify transcripts", "Verify references"]], ["Submitted", "Reject application", "Rejected", 2, "any", 2],
-  ["Under Review", "Automated pre-screening", "Waitlisted", 0, "flag", 0],
-  ["Under Review", "Review application", "Offer Made", 2, "any", 5], 
+  ["Under Review", "Automated pre-screening", "Waitlisted", 0, "strongCandidate=yes", 0],
+  ["Under Review", "Review application", "Offer Made", 2, "any", 5],
   ["Under Review", "Reject application", "Rejected", 2, "any", 5], ["Waitlisted", "Offer place", "Offer Made", 3, "any", 7],
   ["Offer Made", "Accept offer", "Enrolled", 1, "any", 7], ["Offer Made", "Decline offer", "Withdrawn", 1, "any", 7]];
+var MANUF = [["Planned", "Schedule production", "Scheduled", 2, "any", 2],
+  ["Scheduled", "Set up machine", "In Production", 1, "any", 1],
+  ["In Production", "Run batch", "Produced", 1, "any", 5, ["Run part A", "Run part B"]],
+  ["Produced", "Check batch", "Inspected", 2, "any", 2],
+  ["Inspected", "Inspect quality", "Passed", 3, "inspectionResult=pass", 2, ["Measure dimensions", "Test strength"]],
+  ["Inspected", "Inspect quality", "Failed", 3, "inspectionResult=fail", 2],
+  ["Passed", "Release batch", "Ready for Shipping", 4, "urgent=yes", 1],
+  ["Passed", "Release batch", "Ready for Shipping", 2, "urgent=no", 2],
+  ["Failed", "Rework batch", "In Production", 2, "any", 3],
+  ["Failed", "Scrap batch", "Scrapped", 4, "any", 2],
+  ["Ready for Shipping", "Approve high-value shipment", "Shipped", 5, "highValue=yes", 1],
+  ["Ready for Shipping", "Ship batch", "Shipped", 4, "highValue=no", 2],
+  ["Shipped", "Confirm delivery", "Closed", 1, "any", 3]];
 
 var EXAMPLE_ROLES = ["Claims Handler", "Senior Assessor", "Claims Manager"];
+var MANUF_ROLES = ["Operator", "Line Lead", "Quality Inspector", "Production Manager", "Plant Director"];
 var ADMIT_ROLES = ["Admissions Clerk", "Admissions Officer", "Registrar"];
 
 /* Strategy: AssignmentRule (built per workflow, so it only sees that workflow's hierarchy and people) */
@@ -429,16 +493,16 @@ function dueIn(n) { var d = new Date(); d.setDate(d.getDate() + n); return d.get
 function defHtml(w) {
   var d = w.def || [];
   var t = d.length ? '<table class="def"><tr><th>From status</th><th>Action</th><th>To status</th><th>Min. level</th><th>When</th><th>Due</th><th>Parallel tasks</th><th></th></tr>' + d.map(function (r, i) {
-    return "<tr><td>" + esc(r.from) + "</td><td>" + esc(r.action) + "</td><td>" + esc(r.to) + "</td><td>" + (r.role === 0 ? "Automated" : esc(roleName(w, r.role)) + "+") + "</td><td>" + (r.guard === "flag" ? "if flagged" : "always") + "</td><td>" + (r.days ? r.days + " days" : "none") + "</td><td>" + ((r.subs || []).length ? esc(r.subs.join(", ")) : "none") + '</td><td><button class="x" data-defdel="' + i + '" aria-label="Remove row">×</button></td></tr>';
+    return "<tr><td>" + esc(r.from) + "</td><td>" + esc(r.action) + "</td><td>" + esc(r.to) + "</td><td>" + (r.role === 0 ? "Automated" : esc(roleName(w, r.role)) + "+") + "</td><td>" + (!r.guard || r.guard === "any" ? "always" : esc(r.guard)) + "</td><td>" + (r.days ? r.days + " days" : "none") + "</td><td>" + ((r.subs || []).length ? esc(r.subs.join(", ")) : "none") + '</td><td><button class="x" data-defdel="' + i + '" aria-label="Remove row">×</button></td></tr>';
   }).join("") + "</table>" : '<div class="empty">No rows yet. Add one, or load an example.</div>';
   return "<h3>Process map (workflow definition) " + info("definition,composite") + '</h3><div class="meta">Just a table of text, so each industry writes its own statuses. Min. level comes from this workflow\u2019s own hierarchy above. Put a guarded row before its default row. Due = days allowed once the task is created. Parallel tasks = comma-separated sub-tasks that must all finish.</div>' + t +
-    '<div class="form2"><input id="dFrom" placeholder="From status" aria-label="From status"><input id="dAct" placeholder="Action" aria-label="Action"><input id="dTo" placeholder="To status" aria-label="To status"><select id="dRole" aria-label="Minimum level">' + dRoleOpts(w, maxLevel(w) ? 1 : 0) + '</select><select id="dGuard" aria-label="When"><option value="any">always</option><option value="flag">only if flagged</option></select><input id="dDays" type="number" placeholder="Due in (days)" aria-label="Due in days"><input id="dSubs" placeholder="Parallel tasks (a, b)" aria-label="Parallel tasks"><button class="primary" id="defAdd">Add row</button></div><div class="row2"><button id="defEx">Load insurance example</button><button id="defEx2">Load admissions example</button></div><div class="meta">An example also sets its own hierarchy of levels.</div>';
+    '<div class="form2"><input id="dFrom" placeholder="From status" aria-label="From status"><input id="dAct" placeholder="Action" aria-label="Action"><input id="dTo" placeholder="To status" aria-label="To status"><select id="dRole" aria-label="Minimum level">' + dRoleOpts(w, maxLevel(w) ? 1 : 0) + '</select><input id="dGuard" placeholder="Guard: field=value (blank = always)" aria-label="Guard"><input id="dDays" type="number" placeholder="Due in (days)" aria-label="Due in days"><input id="dSubs" placeholder="Parallel tasks (a, b)" aria-label="Parallel tasks"><button class="primary" id="defAdd">Add row</button></div><div class="row2"><button id="defEx">Load insurance example</button><button id="defEx2">Load admissions example</button><button id="defEx3">Load manufacturing example</button></div><div class="meta">An example also sets its own hierarchy of levels.</div>';
 }
 function who(w, p) { return p ? p.name + " (" + roleName(w, p.role || 1) + ")" : "nobody, no participants in the hierarchy"; }
 /* Instance enters a status: create tasks */
 function spawn(w, r) {
   var seen = {}, rows = [], assignment = assignmentFor(w);
-  w.def.forEach(function (x) { if (x.from === r.status && !seen[x.action]) { seen[x.action] = 1; rows.push(x); } });
+  w.def.forEach(function (x) { if (x.from === r.status && guardOk(x.guard, r.data) && !seen[x.action]) { seen[x.action] = 1; rows.push(x); } });
   if (!rows.length) { audit(r, "Instance finished", "Engine", "No actions left from '" + r.status + "'"); return; }
   
   var autoTasks = [];
@@ -475,7 +539,7 @@ function spawn(w, r) {
 }
 function routeFor(w, r, action) {
   var row = null;
-  w.def.forEach(function (x) { if (!row && x.from === r.status && x.action === action && (x.guard !== "flag" || r.flag)) row = x; });
+  w.def.forEach(function (x) { if (!row && x.from === r.status && x.action === action && matchOk(x.guard, r.data)) row = x; });
   return row;
 }
 /* A person set a task to Done. A composite fires only when all children are done. */
@@ -489,7 +553,7 @@ function taskDone(w, t) {
   if (why) { audit(r, "Refused", me ? me.name : "nobody", why); t.status = "todo"; return; }
   if (par) { audit(r, "Subtask done", me.name, "'" + t.action + "' (part of '" + par.action + "')"); if (st(w, par) !== "done") return; }
   if (!isAuto) audit(r, "Task done", me.name, "'" + top.action + "' completed (To do, In progress, Done)");
-  audit(r, "Status changed", "Engine", r.status + " → " + row.to + (row.guard === "flag" ? " (guard: flagged)" : ""));
+  audit(r, "Status changed", "Engine", r.status + " → " + row.to + (row.guard && row.guard !== "any" ? " (guard: " + row.guard + ")" : ""));
   r.status = row.to;
   top.status = "done";
   var gone = 0;
@@ -507,12 +571,12 @@ function cancelRun(w, rid) {
 }
 function runsHtml(w) {
   var d = w.def || [], runs = w.runs || [];
-  var h = "<h3>Running instances " + info("instance,builder,strategy,observer") + '</h3><div class="row2"><button class="primary" id="runNew"' + (d.length ? "" : " disabled") + ">Start new instance</button><button id=\"chkDl\">Check deadlines</button></div>" +
-    '<div class="meta">Starting an instance creates its first task(s). The assigned person finishes them in the Person dashboards tab, and the table then decides the next status.</div>';
+  var h = "<h3>Running instances " + info("instance,builder,strategy,observer") + '</h3>' + startFormHtml(w) + '<div class="row2"><button class="primary" id="runNew"' + (d.length ? "" : " disabled") + ">Start new instance</button><button id=\"chkDl\">Check deadlines</button></div>" +
+    '<div class="meta">Each new instance takes the next input-data case for its example. Click a task on a person dashboard to see that case\'s input data.</div>';
   if (d.length && !w.people.length) h += '<div class="alert">No participants yet. Add levels and people above, or new tasks will stay unassigned.</div>';
   runs.forEach(function (r) {
     var open = w.tasks.filter(function (t) { return t.run === r.id && !hasKids(w, t.id) && !closed(t.status); });
-    h += '<div class="req"><div><b>' + esc(r.name) + '</b> <span class="tag pri">Status: ' + esc(r.status) + '</span> <label class="meta"><input type="checkbox" data-flag="' + r.id + '"' + (r.flag ? " checked" : "") + "> flagged (instance data)</label></div>" +
+    h += '<div class="req"><div><b>' + esc(r.name) + '</b> <span class="tag pri">Status: ' + esc(r.status) + '</span> <span class="meta">' + esc(r.data && r.data.claimNumber || r.data && r.data.orderNumber || "") + '</span></div>' +
       '<div class="meta">' + (open.length ? "Waiting on: " + open.map(function (t) { return esc(t.action) + " → " + esc(pName(t.who)) + (t.due ? " (due " + esc(t.due) + ")" : ""); }).join(" · ") : "Finished: nothing left to do.") + "</div>" +
       (open.length ? '<div class="row2"><button data-cancel="' + r.id + '">Cancel instance</button></div>' : "") + '<div class="meta"><b>Audit history</b></div><div class="hist"><table class="def"><tr><th>Time</th><th>Event</th><th>By</th><th>Detail</th></tr>' +
       (r.log || []).map(function (e) { return '<tr class="' + (e.type === "Refused" ? "no" : "") + '"><td>' + esc(e.at) + "</td><td>" + esc(e.type) + "</td><td>" + esc(e.by) + "</td><td>" + esc(e.detail) + "</td></tr>"; }).join("") + "</table></div></div>";
@@ -522,20 +586,21 @@ function runsHtml(w) {
 function engineClick(w, t) {
   var b;
   w.def = w.def || []; w.runs = w.runs || [];
-  if (t.id === "defEx" || t.id === "defEx2") {
-    w.def = (t.id === "defEx" ? EXAMPLE : ADMIT).map(function (e) { return { from: e[0], action: e[1], to: e[2], role: e[3], guard: e[4], days: e[5], subs: e[6] || [] }; });
-    w.roles = (t.id === "defEx" ? EXAMPLE_ROLES : ADMIT_ROLES).map(function (n, i) { return { level: i + 1, name: n }; });
+  if (t.id === "defEx" || t.id === "defEx2" || t.id === "defEx3") {
+    var src = t.id === "defEx" ? [EXAMPLE, EXAMPLE_ROLES] : t.id === "defEx2" ? [ADMIT, ADMIT_ROLES] : [MANUF, MANUF_ROLES];
+    w.def = src[0].map(function (e) { return { from: e[0], action: e[1], to: e[2], role: e[3], guard: e[4], days: e[5], subs: e[6] || [] }; });
+    w.roles = src[1].map(function (n, i) { return { level: i + 1, name: n }; });
     w.people.forEach(function (p) { if ((p.role || 1) > w.roles.length) p.role = w.roles.length; });
   }
   else if (t.id === "defAdd") {
     var f = $("dFrom").value.trim(), a = $("dAct").value.trim(), o = $("dTo").value.trim();
     if (!f || !a || !o) return true;
-    w.def.push({ from: f, action: a, to: o, role: +$("dRole").value, guard: $("dGuard").value, days: +$("dDays").value || 0,
+    w.def.push({ from: f, action: a, to: o, role: +$("dRole").value, guard: $("dGuard").value.trim() || "any", days: +$("dDays").value || 0,
       subs: $("dSubs").value.split(",").map(function (x) { return x.trim(); }).filter(Boolean) });
   }
   else if ((b = t.closest("[data-defdel]"))) w.def.splice(+b.getAttribute("data-defdel"), 1);
   else if (t.id === "runNew") {
-    var r = { id: state.nid++, name: "Instance #" + (w.runs.length + 1), status: w.def[0].from, flag: false, log: [] };
+    var r = { id: state.nid++, name: "Instance #" + (w.runs.length + 1), status: w.def[0].from, data: readInputs(w), log: [] };
     audit(r, "Instance created", "Admin", "From the definition, starting at '" + w.def[0].from + "'");
     w.runs.push(r); spawn(w, r);
   }
@@ -551,7 +616,7 @@ function render() {
   $("viewA").classList.toggle("hide", !a);
   $("viewD").classList.toggle("hide", a);
   Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-view") === state.view)); });
-  if (a) { renderWorkflows(); renderMain(); } else renderDash();
+  if (a) { renderWorkflows(); renderMain(); $("inputsCard").innerHTML = inputsHtml(current()); } else renderDash();
 }
 
 /* ---------- Actions ---------- */
@@ -603,6 +668,21 @@ Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
 $("wfAdd").onclick = addWorkflow;
 $("wfName").onkeydown = function (e) { if (e.key === "Enter") addWorkflow(); };
 
+$("inputsCard").onclick = function (e) {
+  var w = current(), del = e.target.closest("[data-infdel]");
+  if (!w) return;
+  w.inputs = w.inputs || [];
+  if (e.target.id === "inAdd") {
+    var k = $("inKey").value.trim();
+    if (!k) return;
+    if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(k)) { alert("Use letters, digits and _ only, starting with a letter. Example: policyNumber"); return; }
+    if (w.inputs.some(function (f) { return f.key === k; })) { alert("'" + k + "' is already a field."); return; }
+    w.inputs.push({ key: k });
+  } else if (del) {
+    w.inputs.splice(+del.getAttribute("data-infdel"), 1);
+  } else return;
+  save(); render();
+};
 $("wfList").onclick = function (e) {
   var d = e.target.closest("[data-delw]");
   if (d) {
@@ -676,6 +756,8 @@ $("main").onchange = function (e) {
 };
 $("asSel").onchange = function () { state.as = +$("asSel").value; save(); render(); };
 $("dash").onclick = function (e) {
+  var row = e.target.closest("[data-task]");
+  if (row && !e.target.closest("button,select,input,label")) { openTaskModal(row.getAttribute("data-task")); return; }
   var q = e.target.closest("[data-req]"), a = e.target.closest("[data-acc]"), p = e.target.closest("[data-pass]");
   if (q) { var ids = q.getAttribute("data-req").split(":"); requestApproval(+ids[0], +ids[1]); }
   else if (a) resolveRequest(+a.getAttribute("data-acc"), "accept");
@@ -707,6 +789,22 @@ document.addEventListener("click", function (e) {
   tip.style.top = (r.bottom + window.scrollY + 8) + "px";
   tip.style.left = Math.max(8, Math.min(r.left + window.scrollX - 8, window.innerWidth - 300)) + "px";
 });
+
+function openTaskModal(key) {
+  var ids = key.split(":"), w = state.workflows.filter(function (x) { return x.id === +ids[0]; })[0], t = w && byId(w, +ids[1]);
+  if (!t) return;
+  var r = t.run ? runOf(w, t.run) : null, data = (r && r.data) || {}, s = st(w, t);
+  var rows = Object.keys(data).map(function (k) { return "<tr><th>" + esc(k) + "</th><td>" + esc(data[k]) + "</td></tr>"; }).join("");
+  $("modalBody").innerHTML = "<h3>" + esc(t.name) + "</h3>" +
+    '<div class="meta">' + esc(w.name) + (r ? " · " + esc(r.name) : "") + " · status " + esc(LABEL[s] || s) + (t.due ? " · due " + esc(t.due) : "") + " · assigned to " + esc(pName(t.who)) + "</div>" +
+    "<h4>Input data</h4>" + (rows ? '<table>' + rows + "</table>" : '<div class="empty">No input data for this case.</div>') +
+    '<h4>Task</h4><div class="meta">Action: ' + esc(t.action || t.name) + " · needs " + esc(roleName(w, t.reqRole || 1)) + "</div>";
+  $("modal").className = "";
+}
+function closeModal() { $("modal").className = "hide"; }
+$("modalClose").onclick = closeModal;
+$("modal").onclick = function (e) { if (e.target.id === "modal") closeModal(); };
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
 
 load();
 if (!current() && state.workflows.length) state.selected = state.workflows[0].id;

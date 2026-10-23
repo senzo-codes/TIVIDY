@@ -22,8 +22,10 @@ Rules for every class:
 
 ## Shared types
 
-- `AuditType` : `enum class { InstanceCreated, InstanceCancelled, InstanceFinished, TaskCreated, SubtaskCreated, AutomatedExecuted, TaskStarted, TaskDone, SubtaskDone, TaskCancelled, StatusChanged, OptionCancelled, ApprovalRequested, PassedUp, ApprovalAccepted, ApprovalRejected, TaskReassigned, FlagChanged, Escalated, Overdue, Refused }`
+- `DataMap` : `std::map<std::string, std::string>` — The case's input data. Every value is text, and numbers and dates are written as text too.
+- `AuditType` : `enum class { InstanceCreated, InstanceCancelled, InstanceFinished, TaskCreated, SubtaskCreated, AutomatedExecuted, TaskStarted, TaskDone, SubtaskDone, TaskCancelled, StatusChanged, OptionCancelled, ApprovalRequested, PassedUp, ApprovalAccepted, ApprovalRejected, TaskReassigned, DataChanged, Refused }`
   — The kinds of event written to the audit log. Each value names one thing that happened.
+- **Dates** are text in the form `YYYY-MM-DD`. An empty due date means no due date. The date arithmetic (adding days, comparing dates) is written inside `WorkflowRunner` and `DueSoonDecorator`, so there is no separate date class.
 
 ## Behaviour rules
 
@@ -32,7 +34,7 @@ Rules for every class:
 3. **Request, don't act.** A person without the authority can only ask for approval. Asking when they already have the authority is refused.
 4. **One holder at a time.** An approval request is offered to one person. That person can accept it only if their level meets the required level. Otherwise they pass it up to the next level. The last handler in the chain rejects it, and the task stays with the person who asked.
 5. **Locked while asking.** A task cannot be completed while an approval request for it is open.
-6. **The definition decides the next status.** When a task finishes, the definition chooses the next status. A flagged instance takes the guarded row. Other open alternatives are cancelled.
+6. **The definition decides the next status.** When a task finishes, the definition chooses the next status. A row with a guard applies only when the instance's data has the guard's value. Other open alternatives are cancelled.
 7. **Parallel subtasks.** A composite is completed when all of its subtasks are completed. Completing the last one moves the workflow on.
 8. **Automated tasks run themselves.** The engine runs them straight away and then moves on.
 9. **Everything is logged.** Each event goes into the instance's audit log.
@@ -106,7 +108,7 @@ Methods:
 - `+setParent(parent : TaskComposite*) : void` V — Sets the owning composite. Called only by `TaskComposite::add` and `remove`.
 - `+getAssignee() : int` V *(const)* — Returns the assignee's id, or -1 if there is none. The default is -1.
 - `+assign(participantId : int) : void` V — Sets the assignee. The default throws, because only human tasks have an assignee.
-- `+getDueDate() : string` V *(const)* — Returns the due date, or empty text. The default is empty.
+- `+getDueDate() : string` V *(const)* — Returns the due date as `YYYY-MM-DD`, or empty if there is none. The default is empty.
 - `+getStatus() : string` **PV** *(const)* — Returns Pending, InProgress, Completed or Cancelled. Each type works this out differently, so it is pure virtual.
 - `+setStatus(operation : const string&) : void` V — Applies `start`, `complete` or `cancel`. The default throws.
 - `+isClosed() : bool` **PV** *(const)* — True when the task is Completed or Cancelled.
@@ -119,9 +121,8 @@ Methods:
 
 Attributes:
 - `-assigneeId : int` — The person it is given to, or -1 if nobody.
-- `-dueDate : string` — The deadline, as `YYYY-MM-DD`, or empty.
+- `-dueDate : string` — The deadline as `YYYY-MM-DD`, or empty if there is none.
 - `-currentState : TaskStates*` — Points to the shared state object for the current status.
-- `-escalated : bool` — True once the deadline check has already moved this task up or marked it overdue.
 - `-priority : bool` — True if the user marked it as a priority.
 - `-observers : vector<TaskObserver*>` (non-owning) — The observers to tell when the status changes.
 
@@ -135,8 +136,6 @@ Methods:
 - `+setStatus(operation : const string&) : void` O — Asks the current state to apply the operation, then tells the observers. This is the only way the status changes.
 - `+isClosed() : bool` O *(const)* — True when the current state is Completed or Cancelled.
 - `+setState(state : TaskStates*) : void` NV — Changes the current state. Called only from inside the state classes.
-- `+isEscalated() : bool` NV *(const)* — Returns the escalated flag.
-- `+setEscalated(escalated : bool) : void` NV — Sets the escalated flag.
 - `+isPriority() : bool` NV *(const)* — Returns the priority flag.
 - `+setPriority(priority : bool) : void` NV — Sets the priority flag.
 - `+attach(observer : TaskObserver*) : void` NV — Adds an observer to the list. Called from the observer's constructor.
@@ -246,11 +245,11 @@ Methods:
 - `+decorationLabel() : string` O *(const)* — Returns "priority" when set, otherwise empty.
 
 ### DueSoonDecorator : Decorator
-- `-today : string` — The current date, passed in when the view is made.
+- `-today : string` — The current date as `YYYY-MM-DD`, passed in when the view is made.
 - `-daysThreshold : int` — How many days ahead counts as "due soon". The default is 2.
 - `+DueSoonDecorator(wrapped : TaskComponent*, today : const string&, daysThreshold : int)` NV — Creates the view.
-- `+checkIfDueSoon() : bool` NV *(const)* — True if the task is open, has a due date, and the date is within the threshold and not yet past.
-- `+isOverdue() : bool` NV *(const)* — True if the task is open, has a due date, and the date is already past.
+- `+checkIfDueSoon() : bool` NV *(const)* — True if the task is open, has a due date, and the due date is within the threshold after today and not yet past.
+- `+isOverdue() : bool` NV *(const)* — True if the task is open, has a due date, and the due date is before today.
 - `+decorationLabel() : string` O *(const)* — Returns "overdue", "due soon", or empty. Overdue is checked first.
 
 ### ApprovalPendingDecorator : Decorator
@@ -382,12 +381,13 @@ Attributes:
 - `-action : string` — The action that triggers the row.
 - `-toStatus : string` — The status it moves to.
 - `-requiredRole : Role` — The level needed for the task this row creates.
-- `-requiresFlag : bool` — True if this row only applies to flagged instances.
+- `-guardKey : string` — The data field this row checks, such as `fraudFlag`. Empty means no guard. If the field is not set yet, the row still creates its task, and the guard decides the next status when the task completes.
+- `-guardValue : string` — The value the field must have, such as `yes`.
 - `-dueDays : int` — Days until the task is due. Zero means no due date. Negative means already overdue.
 - `-parallelSubtasks : vector<string>` — Names of subtasks. Empty means one task.
 
 Methods:
-- `+TransitionRule(fromStatus, action, toStatus, requiredRole, requiresFlag, dueDays, parallelSubtasks)` NV — Creates one row.
+- `+TransitionRule(fromStatus, action, toStatus, requiredRole, guardKey, guardValue, dueDays, parallelSubtasks)` NV — Creates one row.
 - `+getAction() : string` NV *(const)* — Returns the action name.
 - `+getToStatus() : string` NV *(const)* — Returns the status it moves to.
 - `+getRequiredRole() : Role` NV *(const)* — Returns the level needed.
@@ -405,8 +405,8 @@ Methods:
 - `+addRule(rule : const TransitionRule&) : void` NV — Adds a row. This is where each industry writes its own statuses and actions.
 - `+getName() : string` NV *(const)* — Returns the name.
 - `+getInitialStatus() : string` NV *(const)* — Returns the starting status.
-- `+findRule(status, action, flagged) : const TransitionRule*` NV *(const)* — Returns the first row that matches the status, action and flag, or `nullptr`.
-- `+rulesFrom(status : const string&) : vector<const TransitionRule*>` NV *(const)* — Returns every row starting from that status. An empty list means the instance is finished.
+- `+findRule(status : const string&, action : const string&, data : const DataMap&) : const TransitionRule*` NV *(const)* — Returns the first row whose status and action match and whose guard is empty or matches `data`, or `nullptr`.
+- `+rulesFrom(status : const string&, data : const DataMap&) : vector<const TransitionRule*>` NV *(const)* — Returns every row starting from that status whose guard is empty, matches `data`, or refers to a field that is not set yet. An empty list means the instance is finished.
 
 ---
 
@@ -418,7 +418,7 @@ Attributes:
 - `-name : string` — The name shown to the user.
 - `-status : string` — The current status.
 - `-definition : const WorkflowDefinition*` (non-owning) — The definition this instance follows.
-- `-flagged : bool` — The instance flag used by guarded rows. What it means is up to the industry.
+- `-data : DataMap` — The case's input data as text key/value pairs, such as `fraudFlag = yes`. Guards read it. The meaning of each field is up to the industry.
 - `-tasks : vector<TaskComponent*>` (owned) — The top-level tasks.
 - `-observers : vector<TaskObserver*>` (owned) — The observers attached to this instance's tasks. Deleted before the tasks.
 - `-auditLog : vector<AuditEvent>` — The history of this instance.
@@ -431,8 +431,8 @@ Methods:
 - `+getStatus() : string` NV *(const)* — Returns the status.
 - `+setStatus(status : const string&) : void` NV — Changes the status. Only the runner calls this.
 - `+getDefinition() : const WorkflowDefinition*` NV *(const)* — Returns the definition.
-- `+isFlagged() : bool` NV *(const)* — Returns the flag.
-- `+setFlagged(flagged : bool) : void` NV — Sets the flag and logs the change.
+- `+getData(key : const string&) : string` NV *(const)* — Returns the value stored under that key, or empty text if there is none.
+- `+setData(key : const string&, value : const string&) : void` NV — Stores a value and logs `DataChanged` with the old and new values.
 - `+addTask(task : TaskComponent*) : void` NV — Adds a top-level task. The instance takes ownership.
 - `+addObserver(observer : TaskObserver*) : void` NV — Keeps an observer alive for as long as the instance exists.
 - `+removeTask(taskId : int) : void` NV — Finds a top-level task by id, removes it and deletes it.
@@ -476,17 +476,17 @@ Methods:
 - `+WorkflowEngine()` NV — Creates all the subsystems.
 - `+~WorkflowEngine()` V — Deletes the instances before the subsystems, and everything else it owns.
 - `+addParticipant(id : int, name : const string&, level : int, roleName : const string&) : void` NV — Adds a person (refused if the id is taken), then rebuilds the approval chain.
-- `+setToday(today : const string&) : void` NV — Sets the current date for the runner and the deadline monitor.
+- `+setToday(today : const string&) : void` NV — Sets the current date for the runner.
 - `+registerDefinition(definition : WorkflowDefinition*) : void` NV — Stores a process map. Refused if the name is taken.
-- `+startInstance(definitionName : const string&, name : const string&) : WorkflowInstance*` NV — Creates an instance and asks the runner to create its first tasks.
+- `+startInstance(definitionName : const string&, name : const string&, data : const DataMap&) : WorkflowInstance*` NV — Creates an instance with its input data and asks the runner to create its first tasks.
 - `+findInstance(id : int) : WorkflowInstance*` NV *(const)* — Returns the instance with that id, or `nullptr`.
+- `+dashboardFor(participantId : int) : PendingTaskIterator` NV *(const)* — Builds a `PendingTaskIterator` over all instances for that person. The dashboard uses this to list the tasks the person can start.
 - `+startTask(instanceId : int, taskId : int, participantId : int) : void` NV — Finds the three objects, then the runner starts the task.
 - `+completeTask(instanceId : int, taskId : int, participantId : int) : void` NV — Finds the three objects, then the runner completes the task.
 - `+cancelInstance(instanceId : int) : void` NV — Finds the instance, then the runner cancels it.
 - `+requestApproval(instanceId : int, taskId : int, participantId : int) : ApprovalRequest*` NV — Finds the three objects, then the approval service makes the request.
 - `+acceptRequest(instanceId : int, request : ApprovalRequest*, participantId : int) : void` NV — Finds the instance and the person, then the approval service accepts.
 - `+passUpRequest(instanceId : int, request : ApprovalRequest*, participantId : int) : void` NV — Finds the instance and the person, then the approval service passes it up.
-- `+checkDeadlines(instanceId : int) : void` NV — Finds the instance, then runs the deadline monitor on it.
 - `+saveSnapshot() : void` NV — Writes every instance and task to one text block, and stores it with today's date.
 - `+restoreSnapshot(index : int) : void` NV — Replaces the current instances with the ones in the saved snapshot, then recalculates the workload counts. Throws if the index does not exist.
 - `-serializeInstances() : string` NV *(const)* — Writes the text block used by `saveSnapshot`. One line per instance and one per task.
@@ -498,12 +498,12 @@ Attributes:
 - `-approvals : ApprovalService*` (non-owning) — Used to check for a lock.
 - `-humanCreator : HumanTaskCreator` (owned) — Creates human tasks.
 - `-automatedCreator : AutomatedTaskCreator*` (owned) — Creates automated tasks.
-- `-today : string` — The date used for due dates.
+- `-today : string` — The current date, used for due dates.
 - `-nextTaskId : int` — The next task number to use.
 
 Methods:
 - `+WorkflowRunner(registry, assignment, approvals)` NV — Stores the collaborators and starts task numbering at 1.
-- `+setToday(today : const string&) : void` NV — Sets the date used for due dates.
+- `+setToday(today : const string&) : void` NV — Sets the current date.
 - `+start(instance : WorkflowInstance&) : void` NV — Logs the creation and creates the first tasks.
 - `+startTask(instance, task, participant) : void` NV — Checks that the person is the assignee and has the level. Then starts the task and logs it.
 - `+completeTask(instance, task, participant) : void` NV — Steps:
@@ -513,7 +513,7 @@ Methods:
   4. Complete the task and release it from the person. The observers then log it and call `advance`.
 - `+advance(instance, top : TaskComponent*) : void` NV — Called by `CompletionObserver`. If the top task is not completed yet, it waits. Otherwise it cancels the other open top-level tasks, moves the instance to the row's status, logs it, and creates the next tasks.
 - `+cancelInstance(instance : WorkflowInstance&) : void` NV — Cancels every open task, releases each from its person, sets the status to Cancelled and logs it.
-- `-spawnTasks(instance : WorkflowInstance&) : void` NV — Creates the tasks for the instance's current status. If there are no rows, logs `InstanceFinished`.
+- `-spawnTasks(instance : WorkflowInstance&) : void` NV — Creates the tasks for the instance's current status. It takes the rows from `rulesFrom`, keeps one row per distinct action (the first one), and creates a task from that row's role, due days and parallel subtasks. If there are no rows, logs `InstanceFinished`.
   - An automated row creates an automated task, runs it, moves the status on, and checks again.
   - A row without subtasks creates one human task at the lowest level that has someone, with a due date from today plus `dueDays`. If nobody is found, it stays unassigned and this is logged.
   - A row with subtasks creates a composite with one human task for each subtask name.
@@ -551,7 +551,7 @@ Methods:
 
 ## 11. Observer and deadlines
 
-The `HumanTask` is the subject. When its status changes, its observers are told. A due date passing is not a status change, so overdue checks are not an observer. They run when the user presses "Check deadlines".
+The `HumanTask` is the subject. When its status changes, its observers are told. A due date passing is not a status change, so overdue tasks are not an observer. The UI shows them with a label (section 3).
 
 ### TaskObserver [abstract]
 Attributes:
@@ -573,6 +573,8 @@ Methods:
 - `+AuditObserver(subject, instance, registry)` NV — Creates the observer.
 - `+update(task : HumanTask&) : void` O — Writes one audit entry: started, done, or cancelled, with the person's name.
 
+---
+
 ## 12. Iterators
 
 ### Iterator [abstract]
@@ -581,9 +583,9 @@ Methods:
 - `+next() : TaskComponent*` **PV** — Returns the next item and moves on.
 
 ### PendingTaskIterator : Iterator
-- `-items : vector<TaskComponent*>` — The open tasks, taken when the iterator is created.
+- `-items : vector<TaskComponent*>` — The Pending tasks assigned to one person, across all instances. Taken when the iterator is created.
 - `-index : size_t` — The current position.
-- `+PendingTaskIterator(instance : const WorkflowInstance&)` NV — Takes the instance's open tasks.
+- `+PendingTaskIterator(instances : const vector<WorkflowInstance*>&, participantId : int)` NV — Goes through every instance's open leaf tasks and keeps only those whose status is `Pending` and whose assignee is `participantId`. InProgress tasks are not included.
 - `+hasNext() : bool` O *(const)* — True while the position is inside the list.
 - `+next() : TaskComponent*` O — Returns the item and moves on.
 
@@ -594,6 +596,39 @@ Methods:
 - `+sortByDate() : void` NV — Sorts priority tasks first, then by earliest due date. Tasks with no due date go last.
 - `+hasNext() : bool` O *(const)* — True while the position is inside the list.
 - `+next() : TaskComponent*` O — Returns the item and moves on.
+
+---
+
+## Generic engine and industry-specific parts
+
+Both scenarios run on the same engine. The following are reused without change.
+
+**Generic (same for both scenarios):** `WorkflowEngine`, `WorkflowRunner`, `ApprovalService`, `ApprovalRequest`, the `RequestHandler` family, the `AssignmentRule` family, `ParticipantRegistry`, `Participant`, `Role`, the `TaskComponent` family, the `TaskStates` family, the `Decorator` family, the `TaskCreator` family, `TaskBuilder`, `HumanTaskBuilder`, `ProcessDirector`, `WorkflowInstance`, `AuditEvent`, the `TaskObserver` family, `SnapshotHistory` and the `Iterator` family.
+
+**Industry-specific (data only):**
+- The `WorkflowDefinition` and its `TransitionRule` rows.
+- The list of people and their levels.
+- What each data field means. The engine only compares text values.
+
+The engine never compares a status or action name to a fixed value. The only fixed names are the four states (Pending, InProgress, Completed, Cancelled).
+
+---
+
+## Design decisions
+
+- Keep both creators: `HumanTaskCreator` and `AutomatedTaskCreator`.
+- Keep `ProcessDirector` as a separate class that runs the build steps in order.
+- Parallel subtasks are in the demo. A composite only sits at the top level.
+- Decorators are name labels only: `PriorityDecorator`, `DueSoonDecorator`, `ApprovalPendingDecorator`. They are created when a row is drawn.
+- `WorkflowEngine` is a simple facade over `WorkflowRunner` and `ApprovalService`. It also calls `SnapshotHistory`.
+- Four states: Pending, InProgress, Completed, Cancelled.
+- Least-loaded assignment is used for picking someone at a level.
+- The audit log is written by `AuditObserver`.
+- Overdue tasks are shown with a label only. Nothing escalates or reassigns them.
+- `DueDateIterator` sorts its copy and walks it. It is used to order tasks by priority and due date.
+- `PendingTaskIterator` is used by the person's dashboard. It lists only Pending tasks assigned to that person, across all instances. InProgress tasks are not included.
+- The approval chain goes one level at a time, and is rebuilt whenever a person is added. The last handler (`FallbackHandler`) rejects the request.
+- Save and restore are in the demo, so Memento counts toward the design.
 
 ---
 
