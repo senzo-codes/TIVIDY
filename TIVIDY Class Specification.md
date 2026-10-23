@@ -639,15 +639,15 @@ Eleven GoF patterns are used. Each category has at least two. Five are on the sp
 | Category | Pattern | Classes |
 |---|---|---|
 | Creational | Factory Method | `TaskCreator`, `HumanTaskCreator`, `AutomatedTaskCreator` |
-| Creational | Builder *(required)* | `TaskBuilder`, `HumanTaskBuilder`, `ProcessDirector` |
+| Creational | Builder | `TaskBuilder`, `HumanTaskBuilder`, `ProcessDirector` |
 | Structural | Composite | `TaskComponent`, `TaskComposite`, `HumanTask`, `AutomatedTask` |
 | Structural | Decorator | `Decorator`, `PriorityDecorator`, `DueSoonDecorator`, `ApprovalPendingDecorator` |
-| Structural | Facade *(required)* | `WorkflowEngine` |
+| Structural | Facade | `WorkflowEngine` |
 | Behavioural | State | `TaskStates` and the four state classes |
 | Behavioural | Strategy | `AssignmentRule`, `LeastLoadedAssignment`, `RoleBasedAssignment` |
-| Behavioural | Observer *(required)* | `HumanTask` (subject), `TaskObserver`, `CompletionObserver`, `AuditObserver` |
-| Behavioural | Iterator *(required)* | `Iterator`, `PendingTaskIterator`, `DueDateIterator` |
-| Behavioural | Chain of Responsibility *(required)* | `RequestHandler`, `RoleTierHandler`, `FallbackHandler` |
+| Behavioural | Observer | `HumanTask` (subject), `TaskObserver`, `CompletionObserver`, `AuditObserver` |
+| Behavioural | Iterator | `Iterator`, `PendingTaskIterator`, `DueDateIterator` |
+| Behavioural | Chain of Responsibility | `RequestHandler`, `RoleTierHandler`, `FallbackHandler` |
 | Behavioural | Memento | `WorkflowSnapshot`, `SnapshotHistory` |
 
 ---
