@@ -92,7 +92,3 @@ Participant names are left blank, so you can add them in the Admin tab.
 - The quantity and the other fields are shown for the case. The engine does not use them to choose a path.
 
 ---
-
-## 3. Admissions (existing example, no case data yet)
-
-Add the names and data here when you are ready. The prototype already has the admissions process map, so it only needs the case data.
