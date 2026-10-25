@@ -7,6 +7,7 @@ class ApprovalRequest;
 
 class RequestHandler {
 public:
+    RequestHandler();
     virtual ~RequestHandler();
     void setSuccessor(RequestHandler* successor);
     virtual void handle(ApprovalRequest& request) = 0;
