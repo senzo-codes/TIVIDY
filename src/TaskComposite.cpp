@@ -115,3 +115,17 @@ bool TaskComposite::isClosed() const {
     }
     return false;
 }
+
+
+void TaskComposite::setStatus(const std::string& operation) {
+    if (operation != "cancel") {
+        throw std::invalid_argument("Invalid operation. Only 'cancel' is allowed.");
+    }
+
+    for (TaskComponent* child : children) {
+        if (child->isClosed()) {
+            continue;
+        }
+        child->setStatus("cancel");
+    }
+}
