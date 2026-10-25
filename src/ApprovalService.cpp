@@ -67,3 +67,49 @@ void ApprovalService::rebuildChain()
 
     chainHead = head;
 }
+
+ApprovalRequest *ApprovalService::request(WorkflowInstance &instance, TaskComponent *task, Participant &requester)
+{
+    if (task->getAssignee() != requester.getId() || requester.canHandle(*task))
+    {
+        throw std::runtime_error("only the assignee who lacks the required level can ask for approval");
+    }
+
+    if (openRequestFor(task->getId()) != nullptr)
+    {
+        throw std::logic_error("an approval request is already open for this task");
+    }
+
+    ApprovalRequest *approval = new ApprovalRequest(task->getId(), task->getRequiredRole(),
+                                                    requester.getRole().getLevel());
+    chainHead->handle(*approval);
+    requests.push_back(approval);
+
+    if (approval->isOpen())
+    {
+        Participant *holder = registry->find(approval->getHolderId());
+        instance.logEvent(AuditType::ApprovalRequested, requester.getName(), "offered to " + (holder != nullptr ? holder->getName() : std::string("nobody")));
+    }
+    else
+    {
+        instance.logEvent(AuditType::ApprovalRequested, requester.getName(), "no one above can take it");
+        instance.logEvent(AuditType::ApprovalRejected, requester.getName(), "rejected by the fallback");
+    }
+    return approval;
+}
+
+void ApprovalService::passUp(WorkflowInstance &instance, ApprovalRequest *request, Participant& participant)
+{
+    if (request->getHolderId() != participant.getId())
+    {
+        throw std::runtime_error("only the current holder can pass a request up");
+    }
+
+    instance.logEvent(AuditType::PassedUp, participant.getName(), "passed up to the next level");
+    chainHead->handle(*request);
+
+    if (!request->isOpen())
+    {
+        instance.logEvent(AuditType::ApprovalRejected, participant.getName(), "rejected by the fallback");
+    }
+}
