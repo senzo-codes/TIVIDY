@@ -27,8 +27,7 @@ public:
     void addParticipant(int id, const std::string& name, int level, const std::string& roleName);
     void setToday(const std::string& today);
     void registerDefinition(WorkflowDefinition* definition);
-    WorkflowInstance* startInstance(const std::string& definitionName, const std::string& name,
-                                    const DataMap& data);
+    WorkflowInstance* startInstance(const std::string& definitionName, const std::string& name);
     WorkflowInstance* findInstance(int id) const;
     void startTask(int instanceId, int taskId, int participantId);
     void completeTask(int instanceId, int taskId, int participantId);
