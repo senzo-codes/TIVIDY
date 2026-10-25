@@ -1,5 +1,6 @@
 #include "TaskComposite.h"
 #include <algorithm>
+#include <iostream>
 #include <stdexcept>
 
 TaskComposite::TaskComposite(int id, const std::string& name, const Role& requiredRole) : TaskComponent(id, name, requiredRole) {}
@@ -127,5 +128,14 @@ void TaskComposite::setStatus(const std::string& operation) {
             continue;
         }
         child->setStatus("cancel");
+    }
+}
+
+void TaskComposite::printTaskInfo() const {
+    std::cout << "Task " << id << ": " << name << " [" << getStatus() << "] (Composite)\n";
+
+    for (const TaskComponent* child : children) {
+        std::cout << "  ";
+        child->printTaskInfo();
     }
 }
