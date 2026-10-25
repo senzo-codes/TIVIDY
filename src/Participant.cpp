@@ -46,3 +46,4 @@ bool Participant::canHandle(const TaskComponent &task) const
 {
     return (role.getLevel() >= task.getRequiredRole().getLevel()) ? true : false;
 }
+ 

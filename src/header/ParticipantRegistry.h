@@ -30,3 +30,4 @@ private:
 };
 
 #endif // TIVIDY_PARTICIPANTREGISTRY_H
+ 

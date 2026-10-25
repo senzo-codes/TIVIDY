@@ -34,7 +34,7 @@ Participant *ParticipantRegistry::find(int id) const
     for (Participant* part : participants) {
         if (part->getId() == id)
             return part;
-    }
+    } 
 
     return nullptr;
 }
