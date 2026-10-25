@@ -18,7 +18,7 @@ HumanTaskBuilder &HumanTaskBuilder::reset()
     dueDate = "";
     requiredRole = Role(1, "");
     return *this;
-}
+} 
 
 /**
  * @brief An ID setter 

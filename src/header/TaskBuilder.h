@@ -19,3 +19,4 @@ public:
 };
 
 #endif // TIVIDY_TASKBUILDER_H
+ 

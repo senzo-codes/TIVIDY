@@ -23,4 +23,4 @@ TaskComponent *ProcessDirector::constructTask(int id, const std::string &name, i
 {
     builder->reset();
     return builder->getResult();
-}
+} 
