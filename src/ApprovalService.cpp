@@ -8,7 +8,6 @@
 #include "Participant.h"
 #include "AssignmentRule.h"
 #include "AuditType.h"
-#include "Errors.h"
 
 ApprovalService::ApprovalService(ParticipantRegistry *registry, AssignmentRule *rule)
     : registry(registry),
@@ -98,7 +97,27 @@ ApprovalRequest *ApprovalService::request(WorkflowInstance &instance, TaskCompon
     return approval;
 }
 
-void ApprovalService::passUp(WorkflowInstance &instance, ApprovalRequest *request, Participant& participant)
+void ApprovalService::accept(WorkflowInstance &instance, ApprovalRequest *request, Participant &participant)
+{
+    if (request->getHolderId() != participant.getId() || !request->canBeAcceptedBy(participant.getRole().getLevel()))
+    {
+        throw std::runtime_error("only the current holder, at a high enough level, can accept");
+    }
+
+    TaskComponent *task = instance.findTask(request->getTaskId());
+    if (task == nullptr)
+    {
+        throw std::logic_error("the task for this request is not in the instance");
+    }
+
+    registry->assign(task, participant.getId());
+
+    request->accept(participant.getId());
+
+    instance.logEvent(AuditType::ApprovalAccepted, participant.getName(), "task reassigned to " + participant.getName());
+}
+
+void ApprovalService::passUp(WorkflowInstance &instance, ApprovalRequest *request, Participant &participant)
 {
     if (request->getHolderId() != participant.getId())
     {
@@ -112,4 +131,16 @@ void ApprovalService::passUp(WorkflowInstance &instance, ApprovalRequest *reques
     {
         instance.logEvent(AuditType::ApprovalRejected, participant.getName(), "rejected by the fallback");
     }
+}
+
+ApprovalRequest *ApprovalService::openRequestFor(int taskId) const
+{
+    for (ApprovalRequest *request : requests)
+    {
+        if (request->getTaskId() == taskId && request->isOpen())
+        {
+            return request;
+        }
+    }
+    return nullptr;
 }
