@@ -4,6 +4,7 @@
 #include "CompletedState.h"
 #include "CancelledState.h"
 #include "TaskObserver.h"
+#include "TaskStates.h"
 #include <stdexcept>
 #include <algorithm>
 
@@ -36,4 +37,10 @@ void HumanTask::notify() {
     for (TaskObserver* observer : observerSnapshot) {
         observer->update(*this);
     }
+}
+
+
+void HumanTask::setStatus(const std::string& operation) {
+    currentState->handle(*this, operation);
+    notify();
 }
