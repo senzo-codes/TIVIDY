@@ -1,9 +1,8 @@
 #include "CompletedState.h"
+#include <stdexcept>
 
-#include <iostream>
-
-void CompletedState::handle(HumanTask&, const std::string&) {
-    std::cout << "[Error] Task is already completed. No further operations allowed.\n";
+TaskStates* CompletedState::handle(HumanTask&, const std::string&) {
+    throw std::logic_error("[Error] Task is already completed. No further operations allowed.");
 }
 
 std::string CompletedState::getName() const {

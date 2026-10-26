@@ -15,11 +15,12 @@ class HumanTask;
 class CompletedState : public TaskStates {
 public:
     /**
-     * @brief Rejects operations on a completed task.
+     * @brief Rejects operations on a completed task and returns the next state.
      * @param task Completed task; its state is not changed.
      * @param operation Operation that was attempted.
+     * @return TaskStates* Pointer to the next state (typically throws an exception since completed states are terminal).
      */
-    void handle(HumanTask& task, const std::string& operation) override;
+    TaskStates* handle(HumanTask& task, const std::string& operation) override;
 
     /**
      * @brief Gets the name of this state.
