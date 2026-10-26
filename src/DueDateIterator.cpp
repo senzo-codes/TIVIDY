@@ -1,4 +1,5 @@
 #include "DueDateIterator.h"
+#include "TaskComponent.h"
 #include "HumanTask.h"
 #include <string>
 
