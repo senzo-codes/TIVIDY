@@ -15,11 +15,12 @@ class HumanTask;
 class CancelledState : public TaskStates {
 public:
     /**
-     * @brief Rejects operations on a cancelled task.
+     * @brief Rejects operations on a cancelled task and returns the next state.
      * @param task Cancelled task; its state is not changed.
      * @param operation Operation that was attempted.
+     * @return TaskStates* Pointer to the next state (typically throws an exception since cancelled states are terminal).
      */
-    void handle(HumanTask& task, const std::string& operation) override;
+    TaskStates* handle(HumanTask& task, const std::string& operation) override;
 
     /**
      * @brief Gets the name of this state.

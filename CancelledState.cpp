@@ -1,9 +1,8 @@
 #include "CancelledState.h"
+#include <stdexcept>
 
-#include <iostream>
-
-void CancelledState::handle(HumanTask&, const std::string&) {
-    std::cout << "[Error] Task is cancelled/closed. No further operations allowed.\n";
+TaskStates* CancelledState::handle(HumanTask&, const std::string&) {
+    throw std::logic_error("[Error] Task is cancelled/closed. No further operations allowed.");
 }
 
 std::string CancelledState::getName() const {
@@ -12,4 +11,4 @@ std::string CancelledState::getName() const {
 
 bool CancelledState::isClosed() const {
     return true;
-}  
+}
