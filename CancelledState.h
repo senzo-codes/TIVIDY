@@ -6,10 +6,31 @@
 
 class HumanTask;
 
+/**
+ * @class CancelledState
+ * @brief Represents a task that has been cancelled.
+ *
+ * Cancelled tasks are closed and do not accept further operations.
+ */
 class CancelledState : public TaskStates {
 public:
+    /**
+     * @brief Rejects operations on a cancelled task.
+     * @param task Cancelled task; its state is not changed.
+     * @param operation Operation that was attempted.
+     */
     void handle(HumanTask& task, const std::string& operation) override;
+
+    /**
+     * @brief Gets the name of this state.
+     * @return "Cancelled".
+     */
     std::string getName() const override;
+
+    /**
+     * @brief Checks whether this state is terminal.
+     * @return true, because a cancelled task is closed.
+     */
     bool isClosed() const override;
 };
 
