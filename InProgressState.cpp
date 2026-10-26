@@ -4,16 +4,17 @@
 #include "HumanTask.h"
 #include "errors.h"
 #include <iostream>
+#include <stdexcept>
 
-void InProgressState::handle(HumanTask& task, const std::string& operation) {
-    if (operation == "complete" || operation == "approve") {
+TaskStates* InProgressState::handle(HumanTask& task, const std::string& operation) {
+    if (operation == "complete") {
         std::cout << "[Transition] Verification successful. Moving from InProgress to Completed.\n";
-        task.setState(new CompletedState());
-    } else if (operation == "cancel" || operation == "reject") {
-        std::cout << "[Transition] Task rejected/cancelled from InProgress state.\n";
-        task.setState(new CancelledState());
+        return new CompletedState();
+    } else if (operation == "cancel") {
+        std::cout << "[Transition] Task cancelled from InProgress state.\n";
+        return new CancelledState();
     } else {
-        std::cout << "[Error] Invalid operation '" << operation << "' in InProgress state.\n";
+        throw std::logic_error("[Error] Invalid operation '" + operation + "' in InProgress state.");
     }
 }
 

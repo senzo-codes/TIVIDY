@@ -10,17 +10,17 @@ class HumanTask;
  * @class InProgressState
  * @brief Represents a task that is currently being worked on.
  *
- * An in-progress task can be completed, or cancelled .
+ * An in-progress task can be completed or cancelled.
  */
 class InProgressState : public TaskStates {
 public:
     /**
-     * @brief Applies an operation to an in-progress task.
+     * @brief Applies an operation to an in-progress task and returns the next state.
      * @param task Task whose state may change.
      * @param operation Operation to apply ("complete", "cancel").
-     *              
+     * @return TaskStates* Pointer to the newly allocated next state object[cite: 11].
      */
-    void handle(HumanTask& task, const std::string& operation) override;
+    TaskStates* handle(HumanTask& task, const std::string& operation) override;
 
     /**
      * @brief Gets the name of this state.
