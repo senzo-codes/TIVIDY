@@ -1,0 +1,5 @@
+#include "WorkflowInstance.h"
+#include "WorkflowDefinition.h"
+#include "TaskComponent.h"
+#include "TaskObserver.h"
+#include "AuditEvent.h"
