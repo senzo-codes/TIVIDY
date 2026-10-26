@@ -4,16 +4,17 @@
 #include "HumanTask.h"
 #include "errors.h"
 #include <iostream>
+#include <stdexcept>
 
-void PendingState::handle(HumanTask& task, const std::string& operation) {
-    if (operation == "check" || operation == "start") {
-        std::cout << "[Transition] Task checked. Moving from Pending to InProgress.\n";
-        task.setState(new InProgressState());
+TaskStates* PendingState::handle(HumanTask& task, const std::string& operation) {
+    if (operation == "start") {
+        std::cout << "[Transition] Task started. Moving from Pending to InProgress.\n";
+        return new InProgressState();
     } else if (operation == "cancel") {
         std::cout << "[Transition] Task cancelled from Pending state.\n";
-        task.setState(new CancelledState());
+        return new CancelledState();
     } else {
-        std::cout << "[Error] Invalid operation '" << operation << "' in Pending state.\n";
+        throw std::logic_error("[Error] Invalid operation '" + operation + "' in Pending state.");
     }
 }
 

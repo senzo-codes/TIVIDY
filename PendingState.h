@@ -10,17 +10,18 @@ class HumanTask;
  * @class PendingState
  * @brief Represents a task that has not started.
  *
- * A pending task can be started or checked to move it to the in-progress
+ * A pending task can be started to move it to the in-progress
  * state, or cancelled to move it to the cancelled state.
  */
 class PendingState : public TaskStates {
 public:
     /**
-     * @brief Applies an operation to a pending task.
+     * @brief Applies an operation to a pending task and returns the next state.
      * @param task Task whose state may change.
-     * @param operation Operation to apply ("check", "start", or "cancel").
+     * @param operation Operation to apply ("start" or "cancel").
+     * @return TaskStates* Pointer to the newly allocated next state object.
      */
-    void handle(HumanTask& task, const std::string& operation) override;
+    TaskStates* handle(HumanTask& task, const std::string& operation) override;
 
     /**
      * @brief Gets the name of this state.

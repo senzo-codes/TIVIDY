@@ -18,11 +18,12 @@ public:
     virtual ~TaskStates();
 
     /**
-     * @brief Applies an operation to a task according to its current state.
+     * @brief Applies an operation to a task according to its current state and returns the next state.
      * @param task Task whose state may change.
      * @param operation Operation to apply.
+     * @return TaskStates* Pointer to the newly allocated next state object.
      */
-    virtual void handle(HumanTask& task, const std::string& operation) = 0;
+    virtual TaskStates* handle(HumanTask& task, const std::string& operation) = 0;
 
     /**
      * @brief Gets the name of this state.
