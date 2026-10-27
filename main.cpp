@@ -18,10 +18,10 @@ namespace {
 /// @brief Builds the car insurance process map from the scenario table.
 WorkflowDefinition* buildClaimDefinition()
 {
+    Role automated(0, "Automated");
     Role handler(1, "Claims Handler");
     Role assessor(2, "Senior Assessor");
     Role manager(3, "Claims Manager");
-    Role automated(0, "Automated");
 
     std::vector<std::string> noSubtasks;
     std::vector<std::string> assessSubtasks;
@@ -30,7 +30,8 @@ WorkflowDefinition* buildClaimDefinition()
 
     WorkflowDefinition* def = new WorkflowDefinition("Car Insurance Claim", "Registered");
 
-    //  from                  action              to                    role       guardKey     guardValue  days  subtasks
+    //  FROM -> ACTION -> TO -> ROLE -> GUARDKEY -> GUARDVALUE -> DAYS -> SUBTASKS
+    // FOR THE WEB GUI, SUBTAKS ARE GOING TO BE CSV (DON'T FORGET DUDE)
     def->addRule(TransitionRule("Registered",          "Verify policy",    "Verified",            handler,   "",          "",         2, noSubtasks));
     def->addRule(TransitionRule("Registered",          "Reject claim",     "Rejected",            assessor,  "",          "",         2, noSubtasks));
     def->addRule(TransitionRule("Verified",            "Assess damage",    "Assessed",            assessor,  "",          "",         3, assessSubtasks));
@@ -44,6 +45,7 @@ WorkflowDefinition* buildClaimDefinition()
 }
 
 /// @brief Finds an open task with this name that is assigned to this person.
+// THIS IS A HELPER FUNCTION PEEPS, DON'T BE ALARMED
 TaskComponent* findTask(WorkflowInstance* instance, const std::string& name, int assigneeId)
 {
     std::vector<TaskComponent*> open = instance->openLeafTasks();
@@ -56,6 +58,7 @@ TaskComponent* findTask(WorkflowInstance* instance, const std::string& name, int
 }
 
 /// @brief The person has the level for the task, so they start and complete it.
+// THIS IS A HELPER FUNCTION PEEPS, DON'T BE ALARMED
 void doTask(WorkflowEngine& engine, WorkflowInstance* instance, const std::string& name, int personId)
 {
     TaskComponent* task = findTask(instance, name, personId);
@@ -102,10 +105,10 @@ int main()
     WorkflowEngine engine;
     engine.setToday("2026-10-23");
 
-    // People and their levels. Names are placeholders; change them in the input data file if needed.
-    engine.addParticipant(1, "Sam", 1, "Claims Handler");
-    engine.addParticipant(2, "Lee", 2, "Senior Assessor");
-    engine.addParticipant(3, "Pat", 3, "Claims Manager");
+    // THESE ARE PEOPLE AND THIER LEVELS
+    engine.addParticipant(1, "Senzo", 1, "Claims Handler");
+    engine.addParticipant(2, "Liam", 2, "Senior Assessor");
+    engine.addParticipant(3, "Tebello", 3, "Claims Manager");
 
     engine.registerDefinition(buildClaimDefinition());
 
