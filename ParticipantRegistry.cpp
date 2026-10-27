@@ -90,11 +90,22 @@ int ParticipantRegistry::maxRoleLevel() const
  */
 int ParticipantRegistry::openTaskCount(int participantId) const
 {
-    for (const auto& [key, value] : load) {
-        if (key == participantId) 
-            return value;
+    // for (const auto& [key, value] : load) {
+    //     if (key == participantId) 
+    //         return value;
+    // }
+    // return 0;
+
+    // THE VERSION ABOUT WAS USING C++ 17 FEATURE, THE SPEC SAYS C++ 11
+    std::map<int, int>::const_iterator it = load.find(participantId);
+    
+    if (it == load.end())
+    {
+        return 0;
     }
-    return 0;
+
+    return it->second;
+
 }
 
 /**
