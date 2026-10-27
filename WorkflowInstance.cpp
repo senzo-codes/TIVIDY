@@ -12,7 +12,7 @@
  * @param definition The definition this instance follows.
  */
 WorkflowInstance::WorkflowInstance(int id, const std::string &name, const WorkflowDefinition *definition)
-    : id(id), name(name), definition(definition) {}
+    : id(id), name(name), status(definition->getInitialStatus()), definition(definition) {}
 /**
  * @brief Destructor of the work fow instance and its variables
  */
@@ -133,7 +133,7 @@ void WorkflowInstance::addObserver(TaskObserver *observer)
  */
 void WorkflowInstance::removeTask(int taskId)
 {
-    for (int i = 0; i < tasks.size(); i++) {
+    for (size_t i = 0; i < tasks.size(); i++) {
         if (tasks[i]->getId() == taskId) {
             TaskComponent *task = tasks[i];
             tasks.erase(tasks.begin() + i);
@@ -151,7 +151,7 @@ void WorkflowInstance::removeTask(int taskId)
  */
 TaskComponent *WorkflowInstance::findTask(int taskId) const
 {
-    for (int i = 0; i < tasks.size(); i++) {
+    for (size_t i = 0; i < tasks.size(); i++) {
         if (tasks[i]->getId() == taskId) {  
             return tasks[i];
         }
@@ -186,7 +186,7 @@ std::vector<TaskComponent *> WorkflowInstance::openLeafTasks() const
 {
     std::vector<TaskComponent *> subTasks;
 
-    for (int i = 0; i < tasks.size(); i++) {
+    for (size_t i = 0; i < tasks.size(); i++) {
         TaskComposite *comp = dynamic_cast<TaskComposite*>(tasks[i]);
 
         if (comp) {

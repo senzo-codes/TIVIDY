@@ -1,5 +1,7 @@
 #include "HumanTaskCreator.h"
 
+HumanTaskCreator::HumanTaskCreator() : director(&builder) { }
+
 HumanTaskCreator::~HumanTaskCreator() { }
 
 TaskComponent* HumanTaskCreator::createTask(int id, const std::string& name, int assigneeId,

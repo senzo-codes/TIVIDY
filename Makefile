@@ -1,24 +1,23 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -g -Wall
+TARGET = TIVIDY
 
-SOURCES = \
-		main.cpp \
-
-
-TARGET = CampusGuard
+# Automatically find all .cpp files (main.cpp, WorkflowEngine.cpp, Role.cpp, etc.)
+SRCS = $(wildcard *.cpp)
+OBJS = $(SRCS:.cpp=.o)
 
 all: $(TARGET)
 
-$(TARGET): $(SOURCES)
-	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(TARGET)
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
-run: $(TARGET)
-	./$(TARGET)
+# Rule to compile any .cpp file into an .o file
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS) $(TARGET)
 
 valgrind: $(TARGET)
 	valgrind --leak-check=full --show-leak-kinds=all ./$(TARGET)
-
-clean:
-	rm -f $(TARGET)
-
-.PHONY: all run valgrind clean
+	

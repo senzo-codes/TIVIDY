@@ -146,11 +146,11 @@ void ParticipantRegistry::release(TaskComponent *task)
  */
 void ParticipantRegistry::recountLoad(const std::vector<TaskComponent *> &openTasks)
 {
-    for (auto i = 0; i < participants.size(); ++i) {
+    for (size_t i = 0; i < participants.size(); ++i) {
         load[participants[i]->getId()] = 0;
     }
 
-    for (auto i = 0; i < openTasks.size(); ++i) {
+    for (size_t i = 0; i < openTasks.size(); ++i) {
         int who = openTasks[i]->getAssignee();
 
         if (who != -1) {
