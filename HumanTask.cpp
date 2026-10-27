@@ -14,7 +14,7 @@
 HumanTask::HumanTask(int id, const std::string& name, const Role& requiredRole, const std::string& dueDate, int assigneeId) : TaskComponent(id, name, requiredRole),
     assigneeId(assigneeId),
     dueDate(dueDate),
-    currentState(&PendingState::instance()),
+    currentState(new PendingState()),
     priority(false) {
 }
 
@@ -53,7 +53,10 @@ void HumanTask::notify() {
 
 
 void HumanTask::setStatus(const std::string& operation) {
-    currentState->handle(*this, operation);
+
+    TaskStates* next = currentState->handle(*this, operation);
+    delete currentState;
+    currentState = next;
     notify();
 }
 
