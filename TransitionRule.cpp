@@ -11,10 +11,10 @@
  * @param dueDays Days until the task is due. Zero means no due date. Negative means already overdue.
  * @param parallelSubtasks Names of the subtasks. Empty means one single task.
  */
-TransitionRule::TransitionRule(const std::string &fromStatus, const std::string &action, 
-                                const std::string &toStatus, const Role &requiredRole, 
-                                const std::string &guardKey, const std::string &guardValue, 
-                                int dueDays, const std::vector<std::string> &parallelSubtasks)
+TransitionRule::TransitionRule(const std::string &fromStatus, const std::string &action,
+                               const std::string &toStatus, const Role &requiredRole,
+                               const std::string &guardKey, const std::string &guardValue,
+                               int dueDays, const std::vector<std::string> &parallelSubtasks)
     : fromStatus(fromStatus), action(action), toStatus(toStatus), requiredRole(requiredRole), guardKey(guardKey), guardValue(guardValue), dueDays(dueDays), parallelSubtasks(parallelSubtasks) {}
 
 /**
@@ -69,4 +69,19 @@ int TransitionRule::getDueDays() const
 const std::vector<std::string> &TransitionRule::getParallelSubtasks() const
 {
     return parallelSubtasks;
+}
+
+bool TransitionRule::hasGuard() const
+{
+    return !guardKey.empty();
+}
+
+const std::string &TransitionRule::getGuardKey() const
+{
+    return guardKey;
+}
+
+const std::string &TransitionRule::getGuardValue() const
+{
+    return guardValue;
 }

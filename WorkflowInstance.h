@@ -31,6 +31,7 @@ public:
     void setStatus(const std::string& status);
     const WorkflowDefinition* getDefinition() const;
     std::string getData(const std::string& key) const;
+    const DataMap& getDataMap() const;
     void setData(const std::string& key, const std::string& value);
     void addTask(TaskComponent* task);
     void addObserver(TaskObserver* observer);

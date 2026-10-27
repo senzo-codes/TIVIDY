@@ -17,6 +17,11 @@ public:
     Role getRequiredRole() const;
     int getDueDays() const;
     const std::vector<std::string>& getParallelSubtasks() const;
+
+    bool hasGuard() const;
+    const std::string& getGuardKey() const;
+    const std::string& getGuardValue() const;
+
 private:
     std::string fromStatus;
     std::string action;

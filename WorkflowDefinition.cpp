@@ -51,6 +51,18 @@ const TransitionRule *WorkflowDefinition::findRule(const std::string &status, co
         if (rule.getFromStatus() != status || rule.getAction() != action) {
             continue;
         }
+
+        if (!rule.hasGuard())
+        {
+            return &rule;
+        }
+
+        DataMap::const_iterator it = data.find(rule.getGuardKey());
+
+        if (it != data.end() && it->second == rule.getGuardValue())
+        {
+            return &rule;
+        }
     }
     return nullptr;
 }
@@ -64,11 +76,22 @@ const TransitionRule *WorkflowDefinition::findRule(const std::string &status, co
  */
 std::vector<const TransitionRule *> WorkflowDefinition::rulesFrom(const std::string &status, const DataMap &data) const
 {
-    std::vector<const TransitionRule *> temp;
+    std::vector<const TransitionRule*> temp;
+    for (size_t i = 0; i < rules.size(); ++i) {
+        const TransitionRule& rule = rules[i];
+        if (rule.getFromStatus() != status) continue;
 
-    for (size_t i = 0; i < rules.size(); i++) {
-        if (rules[i].getFromStatus() == status) {
-            temp.push_back(&rules[i]);
+        if (!rule.hasGuard()) {
+            temp.push_back(&rule);
+            continue;
+        }
+        DataMap::const_iterator it = data.find(rule.getGuardKey());
+        if (it == data.end()) {
+            // Key not set yet → include the row so its task is created;
+            // the guard is re-checked when the task completes.
+            temp.push_back(&rule);
+        } else if (it->second == rule.getGuardValue()) {
+            temp.push_back(&rule);
         }
     }
     return temp;

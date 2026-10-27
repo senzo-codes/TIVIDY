@@ -22,6 +22,10 @@ WorkflowInstance::~WorkflowInstance()
         delete obs;
     }
     observers.clear();
+
+    for(TaskComponent* task : tasks) delete task;
+
+    tasks.clear();
 }
 
 /**
@@ -90,19 +94,19 @@ std::string WorkflowInstance::getData(const std::string &key) const
  * @param key   The name of the data entry.
  * @param value The value to store for that key.
  */
-void WorkflowInstance::setData(const std::string &key, const std::string &value)
+void WorkflowInstance::setData(const std::string& key, const std::string& value)
 {
-    bool found = false;
-    for (auto& entry : data) {
-        if (entry.first == key) {
-            entry.second = value;
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        data.insert({key, value});
-    }
+    DataMap::iterator it = data.find(key);
+    std::string oldValue = (it == data.end()) ? std::string() : it->second;
+    if (it == data.end()) data[key] = value;
+    else it->second = value;
+
+    logEvent(AuditType::DataChanged, name, "Data '" + key + "' changed from '" + oldValue + "' to '" + value + "'");
+}
+
+const DataMap& WorkflowInstance::getDataMap() const 
+{ 
+    return data; 
 }
 
 /**

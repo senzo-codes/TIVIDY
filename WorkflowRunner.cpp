@@ -56,9 +56,8 @@ void WorkflowRunner::completeTask(WorkflowInstance &instance, TaskComponent *tas
     }
 
     TaskComponent *top = task->getParent() ? task->getParent() : task;
-    DataMap data;
-    const TransitionRule *rule = instance.getDefinition()->findRule(instance.getStatus(), top->getName(), data);
 
+    const TransitionRule* rule = instance.getDefinition()->findRule(instance.getStatus(), top->getName(), instance.getDataMap());
     if (!rule) {
         instance.logEvent(AuditType::Refused, participant.getName(), "No matching rule found");
         return;
@@ -104,9 +103,7 @@ void WorkflowRunner::cancelInstance(WorkflowInstance &instance)
 
 void WorkflowRunner::spawnTasks(WorkflowInstance &instance)
 {
-    DataMap data;
-    std::vector<const TransitionRule*> rules = instance.getDefinition()->rulesFrom(instance.getStatus(), data);
-
+    std::vector<const TransitionRule*> rules = instance.getDefinition()->rulesFrom(instance.getStatus(), instance.getDataMap());
     if (rules.empty()) {
         instance.logEvent(AuditType::InstanceFinished, instance.getName(), "Instance finished");
         return;

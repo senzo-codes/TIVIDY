@@ -4,13 +4,11 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "PendingTaskIterator.h"
+
 #include "Types.h"
-#include <sstream>
+#include "PendingTaskIterator.h"
 
-#include "WorkflowSnapshot.h"
-
-
+class ParticipantRegistry;
 class LeastLoadedAssignment;
 class RoleBasedAssignment;
 class ApprovalService;
@@ -19,29 +17,35 @@ class SnapshotHistory;
 class WorkflowDefinition;
 class WorkflowInstance;
 class ApprovalRequest;
-class ParticipantRegistry;
 
 class WorkflowEngine {
 public:
     WorkflowEngine();
     ~WorkflowEngine();
+
     WorkflowEngine(const WorkflowEngine&) = delete;
     WorkflowEngine& operator=(const WorkflowEngine&) = delete;
 
     void addParticipant(int id, const std::string& name, int level, const std::string& roleName);
     void setToday(const std::string& today);
     void registerDefinition(WorkflowDefinition* definition);
-    WorkflowInstance* startInstance(const std::string& definitionName, const std::string& name);
+    
+    WorkflowInstance* startInstance(const std::string& definitionName, const std::string& name, const DataMap& data);
     WorkflowInstance* findInstance(int id) const;
+    
     void startTask(int instanceId, int taskId, int participantId);
     void completeTask(int instanceId, int taskId, int participantId);
     void cancelInstance(int instanceId);
+    
     ApprovalRequest* requestApproval(int instanceId, int taskId, int participantId);
     void acceptRequest(int instanceId, ApprovalRequest* request, int participantId);
     void passUpRequest(int instanceId, ApprovalRequest* request, int participantId);
+    
     void saveSnapshot();
     void restoreSnapshot(int index);
-    PendingTaskIterator dashboardFor(int participantId) const;
+    
+    PendingTaskIterator dashboardFor(int participantId);
+
 private:
     std::string serializeInstances() const;
 
@@ -54,7 +58,7 @@ private:
     std::map<std::string, WorkflowDefinition*> definitions;
     std::vector<WorkflowInstance*> instances;
     std::string today;
-    int nextInstanceId; 
+    int nextInstanceId;
 };
 
 #endif // TIVIDY_WORKFLOWENGINE_H
