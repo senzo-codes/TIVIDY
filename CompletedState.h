@@ -6,16 +6,33 @@
 
 class HumanTask;
 
+/**
+ * @class CompletedState
+ * @brief Represents a task that has been completed.
+ *
+ * Completed tasks are closed and do not accept further operations.
+ */
 class CompletedState : public TaskStates {
 public:
-    static CompletedState& instance();
-    void handle(HumanTask& task, const std::string& operation) override;
+    /**
+     * @brief Rejects operations on a completed task and returns the next state.
+     * @param task Completed task; its state is not changed.
+     * @param operation Operation that was attempted.
+     * @return TaskStates* Pointer to the next state (typically throws an exception since completed states are terminal).
+     */
+    TaskStates* handle(HumanTask& task, const std::string& operation) override;
+
+    /**
+     * @brief Gets the name of this state.
+     * @return "Completed".
+     */
     std::string getName() const override;
+
+    /**
+     * @brief Checks whether this state is terminal.
+     * @return true, because a completed task is closed.
+     */
     bool isClosed() const override;
-private:
-    CompletedState() = default;
-    CompletedState(const CompletedState&) = delete;
-    CompletedState& operator=(const CompletedState&) = delete;
 };
 
 #endif // TIVIDY_COMPLETEDSTATE_H
