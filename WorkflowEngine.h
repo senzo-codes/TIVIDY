@@ -8,7 +8,7 @@
 #include "Types.h"
 #include <sstream>
 
-#include "src/header/WorkflowSnapshot.h"
+#include "WorkflowSnapshot.h"
 
 
 class LeastLoadedAssignment;

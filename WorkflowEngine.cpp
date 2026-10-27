@@ -7,9 +7,7 @@
 #include "SnapshotHistory.h"
 #include "WorkflowDefinition.h"
 #include "AutomatedTask.h"
-#include "src/header/WorkflowInstance.h" // For testing - can remove
 #include "WorkflowInstance.h"
-#include "src/header/WorkflowSnapshot.h" // For testing - can remove
 #include "WorkflowSnapshot.h"
 #include "CompletedState.h"
 #include "CancelledState.h"
