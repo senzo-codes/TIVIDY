@@ -7,7 +7,9 @@
 #include "SnapshotHistory.h"
 #include "WorkflowDefinition.h"
 #include "AutomatedTask.h"
+#include "src/header/WorkflowInstance.h" // For testing - can remove
 #include "WorkflowInstance.h"
+#include "src/header/WorkflowSnapshot.h" // For testing - can remove
 #include "WorkflowSnapshot.h"
 #include "CompletedState.h"
 #include "CancelledState.h"
@@ -322,7 +324,6 @@ void WorkflowEngine::restoreSnapshot(int index)
 
             current = new WorkflowInstance(std::stoi(f[1]), f[2], it->second);
             current->setStatus(f[4]);
-            current->setFlagged(f[5] == "1");
             instances.push_back(current);
             currentComposite = nullptr;
         }
@@ -404,7 +405,6 @@ std::string WorkflowEngine::serializeInstances() const
             << "|" << instance->getName()
             << "|" << instance->getDefinition()->getName()
             << "|" << instance->getStatus()
-            << "|" << (instance->isFlagged() ? 1 : 0)
             << "\n";
 
         const std::vector<TaskComponent*>& tasks = instance->getTasks();

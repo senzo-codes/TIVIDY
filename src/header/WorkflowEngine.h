@@ -8,6 +8,9 @@
 #include "Types.h"
 #include <sstream>
 
+#include "src/header/WorkflowSnapshot.h"
+
+
 class LeastLoadedAssignment;
 class RoleBasedAssignment;
 class ApprovalService;

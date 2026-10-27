@@ -6,6 +6,13 @@
 #include "AuditEvent.h"
 #include <string>
 #include <vector>
+#include <ctime>
+
+#include "WorkflowDefinition.h"
+#include "TaskComponent.h"
+#include "TaskObserver.h"
+#include "AuditEvent.h"
+#include "TaskComposite.h"
 
 class TaskComponent;
 class TaskObserver;
