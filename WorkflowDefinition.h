@@ -11,6 +11,7 @@ public:
     WorkflowDefinition(const std::string& name, const std::string& initialStatus);
     void addRule(const TransitionRule& rule);
     std::string getName() const;
+    std::string getName() const;
     std::string getInitialStatus() const;
     const TransitionRule* findRule(const std::string& status, const std::string& action,
                                    const DataMap& data) const;

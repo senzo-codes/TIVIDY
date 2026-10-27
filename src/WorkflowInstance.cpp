@@ -1,4 +1,4 @@
-#include "src/header/WorkflowInstance.h" // For testing - can remove
+#include "WorkflowInstance.h" // For testing - can remove
 #include "WorkflowInstance.h"
 #include "WorkflowDefinition.h"
 #include "TaskComponent.h"

@@ -51,28 +51,24 @@ const TransitionRule *WorkflowDefinition::findRule(const std::string &status, co
         if (rule.getFromStatus() != status || rule.getAction() != action) {
             continue;
         }
-        if (rule.getGuardKey().empty()) {
-            return &rule;
-        }
-        DataMap::const_iterator it = data.find(rule.getGuardKey());
-        if (it != data.end() && it->second == rule.getGuardValue()) {
-            return &rule;
-        }
     }
     return nullptr;
 }
 
 
+/**
+ * @brief Returns every row that starts from the given status.
+ * @param status The status to look up.
+ * @param data   Currently unused.
+ * @return Pointers to the matching rows, owned by the definition.
+ */
 std::vector<const TransitionRule *> WorkflowDefinition::rulesFrom(const std::string &status, const DataMap &data) const
 {
     std::vector<const TransitionRule *> temp;
 
-    for (TransitionRule trans: rules) {
-        if (trans.getToStatus() == status) {
-           for (TransitionRule subtrans: rules) {
-                temp.push_back(&subtrans);
-           }
-           return temp;
+    for (size_t i = 0; i < rules.size(); i++) {
+        if (rules[i].getFromStatus() == status) {
+            temp.push_back(&rules[i]);
         }
     }
     return temp;

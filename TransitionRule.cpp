@@ -36,6 +36,15 @@ std::string TransitionRule::getToStatus() const
 }
 
 /**
+ * @brief Returns the status the instance moves from.
+ * @return The previous status.
+ */
+std::string TransitionRule::getFromStatus() const
+{
+    return fromStatus;
+}
+
+/**
  * @brief Returns the level needed for the task this row creates.
  * @return The required role.
  */
