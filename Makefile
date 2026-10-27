@@ -15,9 +15,12 @@ $(TARGET): $(OBJS)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Automatically builds the target first, then runs it
+run: $(TARGET)
+	./TIVIDY
+
 clean:
 	rm -f $(OBJS) $(TARGET)
 
 valgrind: $(TARGET)
 	valgrind --leak-check=full --show-leak-kinds=all ./$(TARGET)
-	
