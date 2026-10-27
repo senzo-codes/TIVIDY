@@ -8,7 +8,7 @@ class TaskComponent;
 
 class TaskBuilder {
 public:
-    virtual ~TaskBuilder();
+    virtual ~TaskBuilder() = default;
     virtual TaskBuilder& reset() = 0;
     virtual TaskBuilder& setId(int id) = 0;
     virtual TaskBuilder& setName(const std::string& name) = 0;
@@ -19,3 +19,4 @@ public:
 };
 
 #endif // TIVIDY_TASKBUILDER_H
+ 

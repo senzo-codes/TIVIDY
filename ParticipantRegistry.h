@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <iostream>
 
 class Participant;
 class TaskComponent;
@@ -29,3 +30,4 @@ private:
 };
 
 #endif // TIVIDY_PARTICIPANTREGISTRY_H
+ 

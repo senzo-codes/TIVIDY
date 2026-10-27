@@ -13,7 +13,7 @@ RoleBasedAssignment::~RoleBasedAssignment() {}
 // inner rule choose within it (e.g. the least loaded person).
 Participant* RoleBasedAssignment::assign(const Role& minRole) const {
     Participant* lowest = nullptr;
-    std::vector<Participant*> candidates = registry->byRole(minRole);
+    std::vector<Participant*> candidates = registry->byRole(minRole.getLevel());
     for (Participant* p : candidates) {
         if (p->getRole().isAutomated()) continue;
         if (lowest == nullptr || p->getRole().getLevel() < lowest->getRole().getLevel())
