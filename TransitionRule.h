@@ -13,6 +13,7 @@ public:
                    int dueDays, const std::vector<std::string>& parallelSubtasks);
     std::string getAction() const;
     std::string getToStatus() const;
+    std::string getFromStatus() const;
     Role getRequiredRole() const;
     int getDueDays() const;
     const std::vector<std::string>& getParallelSubtasks() const;

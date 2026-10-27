@@ -6,6 +6,10 @@
 #include <vector>
 #include "PendingTaskIterator.h"
 #include "Types.h"
+#include <sstream>
+
+#include "WorkflowSnapshot.h"
+
 
 class LeastLoadedAssignment;
 class RoleBasedAssignment;
@@ -50,7 +54,7 @@ private:
     std::map<std::string, WorkflowDefinition*> definitions;
     std::vector<WorkflowInstance*> instances;
     std::string today;
-    int nextInstanceId;
+    int nextInstanceId; 
 };
 
 #endif // TIVIDY_WORKFLOWENGINE_H

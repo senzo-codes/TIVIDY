@@ -22,5 +22,12 @@ ProcessDirector::ProcessDirector(TaskBuilder *builder)
 TaskComponent *ProcessDirector::constructTask(int id, const std::string &name, int assigneeId, const std::string &dueDate, const Role &requiredRole)
 {
     builder->reset();
+
+    builder->setId(id);
+    builder->setName(name);
+    builder->setAssignee(assigneeId);
+    builder->setDueDate(dueDate);
+    builder->setRequiredRole(requiredRole);
+
     return builder->getResult();
 } 
