@@ -19,7 +19,10 @@ HumanTask::HumanTask(int id, const std::string& name, const Role& requiredRole, 
 }
 
 
-HumanTask::~HumanTask() = default;
+HumanTask::~HumanTask()
+{
+     delete currentState;
+}
 
 void HumanTask::attach(TaskObserver* observer) {
     if (observer == nullptr) {
@@ -55,8 +58,11 @@ void HumanTask::notify() {
 void HumanTask::setStatus(const std::string& operation) {
 
     TaskStates* next = currentState->handle(*this, operation);
-    delete currentState;
-    currentState = next;
+
+    if (next != currentState) {
+        delete currentState;
+        currentState = next;
+    }
     notify();
 }
 
@@ -88,7 +94,11 @@ void HumanTask::setState(TaskStates* state) {
     if (state == nullptr) {
         throw std::invalid_argument("State cannot be null");
     }
-    currentState = state;
+    
+    if (currentState != state) {
+        delete currentState;
+        currentState = state;
+    }
 }
 
 

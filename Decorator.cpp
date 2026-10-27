@@ -5,7 +5,7 @@
 using namespace std;
 
 Decorator::Decorator(TaskComponent* wrapped) 
-: TaskComponent(wrapped->getId(), wrapped->getName(), wrapped->getRequiredRole())
+: TaskComponent(wrapped->getId(), wrapped->getName(), wrapped->getRequiredRole()), wrapped(wrapped)
 { }
 
 Decorator::~Decorator() { }

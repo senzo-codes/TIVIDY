@@ -28,24 +28,22 @@ WorkflowDefinition* buildClaimDefinition()
     assessSubtasks.push_back("Inspect vehicle");
     assessSubtasks.push_back("Estimate repair cost");
 
-    WorkflowDefinition* def = new WorkflowDefinition("Car Insurance Claim", "Registered");
+    WorkflowDefinition* InsuranceDefinition = new WorkflowDefinition("Car Insurance Claim", "Registered");
 
     //  FROM -> ACTION -> TO -> ROLE -> GUARDKEY -> GUARDVALUE -> DAYS -> SUBTASKS
-    // FOR THE WEB GUI, SUBTAKS ARE GOING TO BE CSV (DON'T FORGET DUDE)
-    def->addRule(TransitionRule("Registered",          "Verify policy",    "Verified",            handler,   "",          "",         2, noSubtasks));
-    def->addRule(TransitionRule("Registered",          "Reject claim",     "Rejected",            assessor,  "",          "",         2, noSubtasks));
-    def->addRule(TransitionRule("Verified",            "Assess damage",    "Assessed",            assessor,  "",          "",         3, assessSubtasks));
-    def->addRule(TransitionRule("Assessed",            "Auto fraud check", "Under Investigation", automated, "fraudFlag", "yes",      0, noSubtasks));
-    def->addRule(TransitionRule("Assessed",            "Review claim",     "Approved",            assessor,  "",          "",         2, noSubtasks));
-    def->addRule(TransitionRule("Under Investigation", "Clear claim",      "Approved",            manager,   "",          "",         5, noSubtasks));
-    def->addRule(TransitionRule("Under Investigation", "Reject claim",     "Rejected",            manager,   "",          "",         5, noSubtasks));
-    def->addRule(TransitionRule("Approved",            "Pay claim",        "Paid",                manager,   "",          "",         5, noSubtasks));
+    InsuranceDefinition->addRule(TransitionRule("Registered",          "Verify policy",    "Verified",            handler,   "",          "",         2, noSubtasks));
+    InsuranceDefinition->addRule(TransitionRule("Registered",          "Reject claim",     "Rejected",            assessor,  "",          "",         2, noSubtasks));
+    InsuranceDefinition->addRule(TransitionRule("Verified",            "Assess damage",    "Assessed",            assessor,  "",          "",         3, assessSubtasks));
+    InsuranceDefinition->addRule(TransitionRule("Assessed",            "Auto fraud check", "Under Investigation", automated, "fraudFlag", "yes",      0, noSubtasks));
+    InsuranceDefinition->addRule(TransitionRule("Assessed",            "Review claim",     "Approved",            assessor,  "",          "",         2, noSubtasks));
+    InsuranceDefinition->addRule(TransitionRule("Under Investigation", "Clear claim",      "Approved",            manager,   "",          "",         5, noSubtasks));
+    InsuranceDefinition->addRule(TransitionRule("Under Investigation", "Reject claim",     "Rejected",            manager,   "",          "",         5, noSubtasks));
+    InsuranceDefinition->addRule(TransitionRule("Approved",            "Pay claim",        "Paid",                manager,   "",          "",         5, noSubtasks));
 
-    return def;
+    return InsuranceDefinition;
 }
 
 /// @brief Finds an open task with this name that is assigned to this person.
-// THIS IS A HELPER FUNCTION PEEPS, DON'T BE ALARMED
 TaskComponent* findTask(WorkflowInstance* instance, const std::string& name, int assigneeId)
 {
     std::vector<TaskComponent*> open = instance->openLeafTasks();
@@ -58,7 +56,6 @@ TaskComponent* findTask(WorkflowInstance* instance, const std::string& name, int
 }
 
 /// @brief The person has the level for the task, so they start and complete it.
-// THIS IS A HELPER FUNCTION PEEPS, DON'T BE ALARMED
 void doTask(WorkflowEngine& engine, WorkflowInstance* instance, const std::string& name, int personId)
 {
     TaskComponent* task = findTask(instance, name, personId);
@@ -72,7 +69,11 @@ void requestAndDo(WorkflowEngine& engine, WorkflowInstance* instance, const std:
 {
     TaskComponent* task = findTask(instance, name, askerId);
     ApprovalRequest* request = engine.requestApproval(instance->getId(), task->getId(), askerId);
+    
+    // Holder accepts it (is reassigned to them)
     engine.acceptRequest(instance->getId(), request, holderId);
+    
+    // Holder does it
     doTask(engine, instance, name, holderId);
 }
 
@@ -82,8 +83,14 @@ void requestPassUpAndDo(WorkflowEngine& engine, WorkflowInstance* instance, cons
 {
     TaskComponent* task = findTask(instance, name, askerId);
     ApprovalRequest* request = engine.requestApproval(instance->getId(), task->getId(), askerId);
+    
+    // Middle level passes it up to the top level
     engine.passUpRequest(instance->getId(), request, middleId);
+    
+    // Top level accepts it
     engine.acceptRequest(instance->getId(), request, topId);
+    
+    // Top level does it
     doTask(engine, instance, name, topId);
 }
 
@@ -120,12 +127,19 @@ int main()
     flagged["fraudFlag"] = "yes";
     WorkflowInstance* c1 = engine.startInstance("Car Insurance Claim", "Claim 1", flagged);
 
-    doTask(engine, c1, "Verify policy", 1);                    // Sam verifies the policy
-    requestAndDo(engine, c1, "Inspect vehicle", 1, 2);         // Sam asks, Lee accepts and does it
-    requestAndDo(engine, c1, "Estimate repair cost", 1, 2);    // Assess damage is now complete
+    // SENZO HAS LEVEL 1 AUTHORITY, SO HE DOES THIS TASK
+    doTask(engine, c1, "Verify policy", 1);                    
+    // Senzo gets "Assess damage" (which requires Level 2). He requests approval, Liam accepts.
+    requestAndDo(engine, c1, "Inspect vehicle", 1, 2);         
+    requestAndDo(engine, c1, "Estimate repair cost", 1, 2);    
+    
     // Assessed: the automated check runs and moves the claim to Under Investigation
-    requestPassUpAndDo(engine, c1, "Clear claim", 1, 2, 3);    // Lee passes it up, Pat clears it
-    requestPassUpAndDo(engine, c1, "Pay claim", 1, 2, 3);      // Lee passes it up, Pat pays
+    
+    // "Clear claim" requires Level 3. Senzo requests it, Liam passes it up, Tebello accepts.
+    requestPassUpAndDo(engine, c1, "Clear claim", 1, 2, 3);    
+    
+    // "Pay claim" requires Level 3. Senzo requests, Liam passes up, Tebello accepts.
+    requestPassUpAndDo(engine, c1, "Pay claim", 1, 2, 3);      
     printAudit(c1);
 
     // Case 2: claim without the fraud flag. The Senior Assessor reviews it directly.
@@ -139,8 +153,11 @@ int main()
     doTask(engine, c2, "Verify policy", 1);
     requestAndDo(engine, c2, "Inspect vehicle", 1, 2);
     requestAndDo(engine, c2, "Estimate repair cost", 1, 2);
-    requestAndDo(engine, c2, "Review claim", 1, 2);            // Approved
-    requestPassUpAndDo(engine, c2, "Pay claim", 1, 2, 3);      // Paid
+    // "Review claim" requires Level 2. Senzo asks, Liam accepts.
+    requestAndDo(engine, c2, "Review claim", 1, 2);            
+    
+    // "Pay claim" requires Level 3. Senzo asks, Liam passes up, Tebello accepts.
+    requestPassUpAndDo(engine, c2, "Pay claim", 1, 2, 3);      
     printAudit(c2);
 
     // Case 3: rejected at the start. An unauthorised attempt is refused first.
@@ -152,11 +169,14 @@ int main()
     WorkflowInstance* c3 = engine.startInstance("Car Insurance Claim", "Claim 3", rejected);
 
     try {
-        doTask(engine, c3, "Reject claim", 1);                 // Sam lacks the level, so this is refused
+        // Senzo tries to do "Reject claim" (requires Level 2) without approval.
+        doTask(engine, c3, "Reject claim", 1);                 
     } catch (const std::runtime_error& error) {
         std::cout << "Refused as expected: " << error.what() << "\n";
     }
-    requestAndDo(engine, c3, "Reject claim", 1, 2);            // Sam asks, Lee accepts and rejects
+    
+    // Senzo asks for approval, Liam accepts and rejects.
+    requestAndDo(engine, c3, "Reject claim", 1, 2);            
     printAudit(c3);
 
     return 0;

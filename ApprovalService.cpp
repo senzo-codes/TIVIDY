@@ -97,24 +97,23 @@ ApprovalRequest *ApprovalService::request(WorkflowInstance &instance, TaskCompon
     return approval;
 }
 
-void ApprovalService::accept(WorkflowInstance &instance, ApprovalRequest *request, Participant &participant)
-{
-    if (request->getHolderId() != participant.getId() || !request->canBeAcceptedBy(participant.getRole().getLevel()))
-    {
-        throw std::runtime_error("only the current holder, at a high enough level, can accept");
+void ApprovalService::accept(WorkflowInstance &instance, ApprovalRequest *request, Participant &participant) {
+    if (request->getHolderId() != participant.getId()) {
+        throw std::runtime_error("You are not the current holder of this request.");
+    }
+    if (!request->canBeAcceptedBy(participant.getRole().getLevel())) {
+        throw std::runtime_error("You do not have the required authority to accept this task. You must pass it up.");
     }
 
     TaskComponent *task = instance.findTask(request->getTaskId());
-    if (task == nullptr)
-    {
-        throw std::logic_error("the task for this request is not in the instance");
+    if (task == nullptr) {
+        throw std::logic_error("The task for this request is not in the instance");
     }
 
     registry->assign(task, participant.getId());
-
     request->accept(participant.getId());
 
-    instance.logEvent(AuditType::ApprovalAccepted, participant.getName(), "task reassigned to " + participant.getName());
+    instance.logEvent(AuditType::ApprovalAccepted, participant.getName(), "Accepted task and reassigned to " + participant.getName());
 }
 
 void ApprovalService::passUp(WorkflowInstance &instance, ApprovalRequest *request, Participant &participant)
