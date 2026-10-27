@@ -25,7 +25,7 @@ public:
     void startTask(WorkflowInstance& instance, TaskComponent* task, Participant& participant);
     void completeTask(WorkflowInstance& instance, TaskComponent* task, Participant& participant);
     void advance(WorkflowInstance& instance, TaskComponent* top);
-    void cancelInstance(WorkflowInstance& instance);
+    void cancelInstance(WorkflowInstance& instance); 
 private:
     void spawnTasks(WorkflowInstance& instance);
 
