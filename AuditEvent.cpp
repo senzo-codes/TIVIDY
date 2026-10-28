@@ -28,6 +28,7 @@ std::string AuditEvent::format() const
         case AuditType::TaskReassigned:    typeStr = "TaskReassigned";    break;
         case AuditType::DataChanged:       typeStr = "DataChanged";       break;
         case AuditType::Refused:           typeStr = "Refused";           break;
+        case AuditType::PriorityChanged:   typeStr = "PriorityChanged";   break;
         default:                           typeStr = "Unknown";           break;
     }
 

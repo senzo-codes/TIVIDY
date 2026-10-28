@@ -115,6 +115,10 @@ void WorkflowRunner::spawnTasks(WorkflowInstance &instance) {
         return;
     }
 
+    Role lowestRole(1, "");
+    Participant *owner = assignment->assign(lowestRole);
+    int ownerId = owner ? owner->getId() : -1;
+
     for (const TransitionRule *rule : rules) {
         Role role = rule->getRequiredRole();
 
@@ -132,31 +136,27 @@ void WorkflowRunner::spawnTasks(WorkflowInstance &instance) {
         std::string due = addDays(today, rule->getDueDays());
         const std::vector<std::string> &subtasks = rule->getParallelSubtasks();
 
-        // FIXED: ALWAYS assign to the lowest level (Level 1), just like the HTML demo.
-        Role lowestRole(1, ""); 
-
         if (subtasks.empty()) {
-            Participant *p = assignment->assign(lowestRole);
-            int pId = p ? p->getId() : -1;
-
-            TaskComponent *t = humanCreator.createTask(nextTaskId++, rule->getAction(), pId, due, role);
+            TaskComponent *t = humanCreator.createTask(nextTaskId++, rule->getAction(), -1, due, role);
             instance.addTask(t);
-            if (p) registry->assign(t, pId);
+            if (owner) registry->assign(t, ownerId);
 
             HumanTask *ht = static_cast<HumanTask*>(t);
             instance.addObserver(new AuditObserver(ht, &instance, registry));
             instance.addObserver(new CompletionObserver(ht, &instance, this));
-            instance.logEvent(AuditType::TaskCreated, instance.getName(), "Task created: " + rule->getAction() + " (Assigned to " + (p ? p->getName() : "Unassigned") + ")");
+            instance.logEvent(AuditType::TaskCreated, instance.getName(),
+                "Task created: " + rule->getAction() + " (Assigned to " + (owner ? owner->getName() : "Unassigned") + ")");
         } else {
             TaskComposite *comp = new TaskComposite(nextTaskId++, rule->getAction(), role);
             instance.addTask(comp);
             instance.logEvent(AuditType::TaskCreated, instance.getName(), "Composite created: " + rule->getAction());
 
+            // Parallel subtasks are spread across people, one at a time.
             for (const std::string &subName : subtasks) {
                 Participant *p = assignment->assign(lowestRole);
                 int pId = p ? p->getId() : -1;
 
-                TaskComponent *sub = humanCreator.createTask(nextTaskId++, subName, pId, due, role);
+                TaskComponent *sub = humanCreator.createTask(nextTaskId++, subName, -1, due, role);
                 comp->add(sub);
                 if (p) registry->assign(sub, pId);
 

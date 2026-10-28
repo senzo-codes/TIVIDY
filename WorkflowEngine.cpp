@@ -121,6 +121,27 @@ void WorkflowEngine::cancelInstance(int instanceId) {
     runner->cancelInstance(*inst);
 }
 
+void WorkflowEngine::setPriority(int instanceId, int taskId, bool priority)
+{
+    WorkflowInstance* instance = findInstance(instanceId);
+    if (instance == nullptr) {
+        throw std::invalid_argument("unknown case");
+    }
+ 
+    TaskComponent* task = instance->findTask(taskId);
+    if (task == nullptr) {
+        throw std::invalid_argument("unknown task");
+    }
+ 
+    HumanTask* human = dynamic_cast<HumanTask*>(task);
+    if (human == nullptr) {
+        throw std::logic_error("only human tasks can be marked as priority");
+    }
+ 
+    human->setPriority(priority);
+    instance->logEvent(AuditType::PriorityChanged, "Engine","'" + task->getName() + "' " + (priority ? "marked as priority" : "priority removed"));
+}
+
 ApprovalRequest* WorkflowEngine::requestApproval(int instanceId, int taskId, int participantId) {
     WorkflowInstance* inst = findInstance(instanceId);
     if (!inst) throw std::invalid_argument("No such instance");
