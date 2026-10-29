@@ -6,16 +6,18 @@
 
 class TaskComponent;
 
-class DueDateIterator : public Iterator {
+class DueDateIterator : public Iterator
+{
 public:
-    explicit DueDateIterator(const std::vector<TaskComponent*>& tasks);
+    explicit DueDateIterator(const std::vector<TaskComponent *> &tasks);
     ~DueDateIterator() override;
 
     void sortByDate();
     bool hasNext() const override;
-    TaskComponent* next() override;
+    TaskComponent *next() override;
+
 private:
-    std::vector<TaskComponent*> items;
+    std::vector<TaskComponent *> items;
     std::size_t index;
 };
 

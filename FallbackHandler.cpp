@@ -3,9 +3,9 @@
 
 FallbackHandler::FallbackHandler() : RequestHandler() {}
 
-FallbackHandler::~FallbackHandler(){}
+FallbackHandler::~FallbackHandler() {}
 
-void FallbackHandler::handle(ApprovalRequest& request)
+void FallbackHandler::handle(ApprovalRequest &request)
 {
     if (request.isOpen())
     {

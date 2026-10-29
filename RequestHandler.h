@@ -9,7 +9,7 @@ class ApprovalRequest;
  * @brief Base class of the approval chain.
  *
  * Each handler covers one authority level. It either offers an approval
- * request to someone at that level, or passes the request to its successor.
+ * request to someone at that level, or passes the request to its successor
  */
 
 class RequestHandler

@@ -1,3 +1,3 @@
 #include "TaskCreator.h"
 
-TaskCreator::~TaskCreator() { }
+TaskCreator::~TaskCreator() {}

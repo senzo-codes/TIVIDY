@@ -13,7 +13,8 @@ class HumanTask;
  * A pending task can be started to move it to the in-progress
  * state, or cancelled to move it to the cancelled state.
  */
-class PendingState : public TaskStates {
+class PendingState : public TaskStates
+{
 public:
     /**
      * @brief Applies an operation to a pending task and returns the next state.
@@ -21,7 +22,7 @@ public:
      * @param operation Operation to apply ("start" or "cancel").
      * @return TaskStates* Pointer to the newly allocated next state object.
      */
-    TaskStates* handle(HumanTask& task, const std::string& operation) override;
+    TaskStates *handle(HumanTask &task, const std::string &operation) override;
 
     /**
      * @brief Gets the name of this state.

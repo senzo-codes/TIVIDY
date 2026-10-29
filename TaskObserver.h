@@ -4,14 +4,16 @@
 class HumanTask;
 class WorkflowInstance;
 
-class TaskObserver {
+class TaskObserver
+{
 public:
-    TaskObserver(HumanTask* subject, WorkflowInstance* instance);
+    TaskObserver(HumanTask *subject, WorkflowInstance *instance);
     virtual ~TaskObserver();
-    virtual void update(HumanTask& task) = 0;
+    virtual void update(HumanTask &task) = 0;
+
 protected:
-    HumanTask* subject;
-    WorkflowInstance* instance;
+    HumanTask *subject;
+    WorkflowInstance *instance;
 };
 
 #endif // TIVIDY_TASKOBSERVER_H

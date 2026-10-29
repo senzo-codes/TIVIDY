@@ -30,4 +30,4 @@ TaskComponent *ProcessDirector::constructTask(int id, const std::string &name, i
     builder->setRequiredRole(requiredRole);
 
     return builder->getResult();
-} 
+}

@@ -5,15 +5,17 @@
 
 class ParticipantRegistry;
 
-class RoleBasedAssignment : public AssignmentRule {
+class RoleBasedAssignment : public AssignmentRule
+{
 public:
-    RoleBasedAssignment(ParticipantRegistry* registry, AssignmentRule* inner);
+    RoleBasedAssignment(ParticipantRegistry *registry, AssignmentRule *inner);
     ~RoleBasedAssignment() override;
 
-    Participant* assign(const Role& minRole) const override;
+    Participant *assign(const Role &minRole) const override;
+
 private:
-    ParticipantRegistry* registry;
-    AssignmentRule* inner;
+    ParticipantRegistry *registry;
+    AssignmentRule *inner;
 };
 
 #endif // TIVIDY_ROLEBASEDASSIGNMENT_H

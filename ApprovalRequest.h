@@ -29,7 +29,7 @@ public:
 
     /**
      * @brief Returns the id of the person the request is currently offered to.
-     * @return The holder's participant id, or -1 if nobody holds it.
+     * @return The holder's participant id, or -1 if nobody holds it
      */
     int getHolderId() const;
 

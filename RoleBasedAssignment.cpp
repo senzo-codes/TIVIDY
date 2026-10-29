@@ -6,7 +6,6 @@
 RoleBasedAssignment::RoleBasedAssignment(ParticipantRegistry *registry, AssignmentRule *inner)
     : registry(registry), inner(inner) {}
 
-// Does not own registry or inner (WorkflowEngine owns them).
 RoleBasedAssignment::~RoleBasedAssignment() {}
 
 // Find the lowest role tier >= minRole that actually has people, then let the

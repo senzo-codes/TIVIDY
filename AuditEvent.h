@@ -4,11 +4,13 @@
 #include "AuditType.h"
 #include <string>
 
-class AuditEvent {
+class AuditEvent
+{
 public:
-    AuditEvent(const std::string& timestamp, AuditType type,
-               const std::string& actor, const std::string& detail);
+    AuditEvent(const std::string &timestamp, AuditType type,
+               const std::string &actor, const std::string &detail);
     std::string format() const;
+
 private:
     std::string timestamp;
     AuditType type;

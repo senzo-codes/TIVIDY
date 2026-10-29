@@ -66,7 +66,7 @@ int TransitionRule::getDueDays() const
  * @brief Returns the names of the parallel subtasks.
  * @return A read-only reference to the names. Empty means one single task.
  */
-const std::vector<std::string> &TransitionRule::getParallelSubtasks() const
+const std::vector<std::string>& TransitionRule::getParallelSubtasks() const
 {
     return parallelSubtasks;
 }

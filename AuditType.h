@@ -1,13 +1,28 @@
 #ifndef TIVIDY_AUDITTYPE_H
 #define TIVIDY_AUDITTYPE_H
 
-enum class AuditType {
-    InstanceCreated, InstanceCancelled, InstanceFinished,
-    TaskCreated, SubtaskCreated, AutomatedExecuted,
-    TaskStarted, TaskDone, SubtaskDone, TaskCancelled,
-    StatusChanged, OptionCancelled,
-    ApprovalRequested, PassedUp, ApprovalAccepted, ApprovalRejected,
-    TaskReassigned, DataChanged, Refused, PriorityChanged
+enum class AuditType
+{
+    InstanceCreated,
+    InstanceCancelled,
+    InstanceFinished,
+    TaskCreated,
+    SubtaskCreated,
+    AutomatedExecuted,
+    TaskStarted,
+    TaskDone,
+    SubtaskDone,
+    TaskCancelled,
+    StatusChanged,
+    OptionCancelled,
+    ApprovalRequested,
+    PassedUp,
+    ApprovalAccepted,
+    ApprovalRejected,
+    TaskReassigned,
+    DataChanged,
+    Refused,
+    PriorityChanged
 };
 
 #endif // TIVIDY_AUDITTYPE_H

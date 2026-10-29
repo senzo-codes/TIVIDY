@@ -5,14 +5,20 @@
 #include <iostream>
 #include <stdexcept>
 
-TaskStates* InProgressState::handle(HumanTask& task, const std::string& operation) {
-    if (operation == "complete") {
+TaskStates *InProgressState::handle(HumanTask &task, const std::string &operation)
+{
+    if (operation == "complete")
+    {
         std::cout << "[Transition] Verification successful. Moving from InProgress to Completed.\n";
         return new CompletedState();
-    } else if (operation == "cancel") {
+    }
+    else if (operation == "cancel")
+    {
         std::cout << "[Transition] Task cancelled from InProgress state.\n";
         return new CancelledState();
-    } else {
+    }
+    else
+    {
         throw std::logic_error("[Error] Invalid operation '" + operation + "' in InProgress state.");
     }
 }

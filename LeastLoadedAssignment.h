@@ -5,14 +5,16 @@
 
 class ParticipantRegistry;
 
-class LeastLoadedAssignment : public AssignmentRule {
+class LeastLoadedAssignment : public AssignmentRule
+{
 public:
-    explicit LeastLoadedAssignment(ParticipantRegistry* registry);
+    explicit LeastLoadedAssignment(ParticipantRegistry *registry);
     ~LeastLoadedAssignment() override;
 
-    Participant* assign(const Role& role) const override;
+    Participant *assign(const Role &role) const override;
+
 private:
-    ParticipantRegistry* registry;
+    ParticipantRegistry *registry;
 };
 
 #endif // TIVIDY_LEASTLOADEDASSIGNMENT_H

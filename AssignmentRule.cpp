@@ -1,3 +1,5 @@
 #include "AssignmentRule.h"
 
-AssignmentRule::~AssignmentRule() {}
+AssignmentRule::~AssignmentRule()
+{
+}

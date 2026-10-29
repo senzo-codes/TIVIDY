@@ -12,9 +12,10 @@ class HumanTask;
  * Concrete states define which operations are valid and how a task changes
  * state in response to them.
  */
-class TaskStates {
+class TaskStates
+{
 public:
-    /** @brief Destroys the state object through a base-class pointer. */
+    /** @brief Destroys the state object through a base-class pointer.*/
     virtual ~TaskStates();
 
     /**
@@ -23,7 +24,7 @@ public:
      * @param operation Operation to apply.
      * @return TaskStates* Pointer to the newly allocated next state object.
      */
-    virtual TaskStates* handle(HumanTask& task, const std::string& operation) = 0;
+    virtual TaskStates *handle(HumanTask &task, const std::string &operation) = 0;
 
     /**
      * @brief Gets the name of this state.

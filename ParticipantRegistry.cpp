@@ -2,13 +2,14 @@
 #include "Participant.h"
 #include "TaskComponent.h"
 
-/// @brief Constructor 
+/// @brief Constructor
 ParticipantRegistry::ParticipantRegistry() {}
 
-/// @brief Destructor 
+/// @brief Destructor
 ParticipantRegistry::~ParticipantRegistry()
 {
-    for (Participant* part: participants) {
+    for (Participant *part : participants)
+    {
         delete part;
     }
     participants.clear();
@@ -31,10 +32,11 @@ void ParticipantRegistry::add(Participant *participant)
  */
 Participant *ParticipantRegistry::find(int id) const
 {
-    for (Participant* part : participants) {
+    for (Participant *part : participants)
+    {
         if (part->getId() == id)
             return part;
-    } 
+    }
 
     return nullptr;
 }
@@ -55,10 +57,12 @@ const std::vector<Participant *> &ParticipantRegistry::all() const
  */
 std::vector<Participant *> ParticipantRegistry::byRole(int level) const
 {
-    std::vector<Participant*> vec;
+    std::vector<Participant *> vec;
 
-    for (Participant* part : participants) {
-        if (part->getRole().getLevel() == level) {
+    for (Participant *part : participants)
+    {
+        if (part->getRole().getLevel() == level)
+        {
             vec.push_back(part);
         }
     }
@@ -67,16 +71,21 @@ std::vector<Participant *> ParticipantRegistry::byRole(int level) const
 
 /**
  * @brief Finding the max role level
- * @return Returns the highest level in use 
+ * @return Returns the highest level in use
  */
 int ParticipantRegistry::maxRoleLevel() const
 {
-    if (participants.size() == 0) { return 0; }
+    if (participants.size() == 0)
+    {
+        return 0;
+    }
 
     int max = 0;
 
-    for (Participant* part : participants) {
-        if (part->getRole().getLevel() >= max) {
+    for (Participant *part : participants)
+    {
+        if (part->getRole().getLevel() >= max)
+        {
             max = part->getRole().getLevel();
         }
     }
@@ -91,21 +100,20 @@ int ParticipantRegistry::maxRoleLevel() const
 int ParticipantRegistry::openTaskCount(int participantId) const
 {
     // for (const auto& [key, value] : load) {
-    //     if (key == participantId) 
+    //     if (key == participantId)
     //         return value;
     // }
     // return 0;
 
     // THE VERSION ABOUT WAS USING C++ 17 FEATURE, THE SPEC SAYS C++ 11
     std::map<int, int>::const_iterator it = load.find(participantId);
-    
+
     if (it == load.end())
     {
         return 0;
     }
 
     return it->second;
-
 }
 
 /**
@@ -117,7 +125,8 @@ void ParticipantRegistry::assign(TaskComponent *task, int participantId)
 {
     int oldHolder = task->getAssignee();
 
-    if (oldHolder != -1) {
+    if (oldHolder != -1)
+    {
         load[oldHolder] -= 1;
     }
 
@@ -135,7 +144,8 @@ void ParticipantRegistry::release(TaskComponent *task)
 
     task->assign(-1);
 
-    if (oldHolder != -1) {
+    if (oldHolder != -1)
+    {
         load[oldHolder] -= 1;
     }
 }
@@ -146,14 +156,17 @@ void ParticipantRegistry::release(TaskComponent *task)
  */
 void ParticipantRegistry::recountLoad(const std::vector<TaskComponent *> &openTasks)
 {
-    for (size_t i = 0; i < participants.size(); ++i) {
+    for (size_t i = 0; i < participants.size(); ++i)
+    {
         load[participants[i]->getId()] = 0;
     }
 
-    for (size_t i = 0; i < openTasks.size(); ++i) {
+    for (size_t i = 0; i < openTasks.size(); ++i)
+    {
         int who = openTasks[i]->getAssignee();
 
-        if (who != -1) {
+        if (who != -1)
+        {
             load[who] += 1;
         }
     }
