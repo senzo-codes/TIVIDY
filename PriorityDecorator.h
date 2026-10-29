@@ -3,12 +3,14 @@
 
 #include "Decorator.h"
 
-class PriorityDecorator : public Decorator {
+class PriorityDecorator : public Decorator
+{
 public:
-    PriorityDecorator(TaskComponent* wrapped, bool priority);
+    PriorityDecorator(TaskComponent *wrapped, bool priority);
     ~PriorityDecorator() override;
 
     std::string decorationLabel() const override;
+
 private:
     bool priority;
 };

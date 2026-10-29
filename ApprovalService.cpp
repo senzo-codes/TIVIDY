@@ -20,7 +20,6 @@ ApprovalService::ApprovalService(ParticipantRegistry *registry, AssignmentRule *
 ApprovalService::~ApprovalService()
 {
     delete chainHead;
-
     for (ApprovalRequest *request : requests)
     {
         delete request;
@@ -97,16 +96,20 @@ ApprovalRequest *ApprovalService::request(WorkflowInstance &instance, TaskCompon
     return approval;
 }
 
-void ApprovalService::accept(WorkflowInstance &instance, ApprovalRequest *request, Participant &participant) {
-    if (request->getHolderId() != participant.getId()) {
+void ApprovalService::accept(WorkflowInstance &instance, ApprovalRequest *request, Participant &participant)
+{
+    if (request->getHolderId() != participant.getId())
+    {
         throw std::runtime_error("You are not the current holder of this request.");
     }
-    if (!request->canBeAcceptedBy(participant.getRole().getLevel())) {
+    if (!request->canBeAcceptedBy(participant.getRole().getLevel()))
+    {
         throw std::runtime_error("You do not have the required authority to accept this task. You must pass it up.");
     }
 
     TaskComponent *task = instance.findTask(request->getTaskId());
-    if (task == nullptr) {
+    if (task == nullptr)
+    {
         throw std::logic_error("The task for this request is not in the instance");
     }
 

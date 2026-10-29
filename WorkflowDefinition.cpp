@@ -13,9 +13,9 @@ WorkflowDefinition::WorkflowDefinition(const std::string &name, const std::strin
  * @details This is where each industry writes its own statuses and actions
  * @param rule One of the rows
  */
-void WorkflowDefinition::addRule(const TransitionRule &rule) 
+void WorkflowDefinition::addRule(const TransitionRule &rule)
 {
-    rules.push_back(rule); 
+    rules.push_back(rule);
 }
 
 /**
@@ -45,10 +45,12 @@ std::string WorkflowDefinition::getInitialStatus() const
  */
 const TransitionRule *WorkflowDefinition::findRule(const std::string &status, const std::string &action, const DataMap &data) const
 {
-    for (size_t i = 0; i < rules.size(); i++) {
+    for (size_t i = 0; i < rules.size(); i++)
+    {
         const TransitionRule &rule = rules[i];
 
-        if (rule.getFromStatus() != status || rule.getAction() != action) {
+        if (rule.getFromStatus() != status || rule.getAction() != action)
+        {
             continue;
         }
 
@@ -67,7 +69,6 @@ const TransitionRule *WorkflowDefinition::findRule(const std::string &status, co
     return nullptr;
 }
 
-
 /**
  * @brief Returns every row that starts from the given status.
  * @param status The status to look up.
@@ -76,24 +77,29 @@ const TransitionRule *WorkflowDefinition::findRule(const std::string &status, co
  */
 std::vector<const TransitionRule *> WorkflowDefinition::rulesFrom(const std::string &status, const DataMap &data) const
 {
-    std::vector<const TransitionRule*> temp;
-    for (size_t i = 0; i < rules.size(); ++i) {
-        const TransitionRule& rule = rules[i];
-        if (rule.getFromStatus() != status) continue;
+    std::vector<const TransitionRule *> temp;
+    for (size_t i = 0; i < rules.size(); ++i)
+    {
+        const TransitionRule &rule = rules[i];
+        if (rule.getFromStatus() != status)
+            continue;
 
-        if (!rule.hasGuard()) {
+        if (!rule.hasGuard())
+        {
             temp.push_back(&rule);
             continue;
         }
         DataMap::const_iterator it = data.find(rule.getGuardKey());
-        if (it == data.end()) {
+        if (it == data.end())
+        {
             // Key not set yet → include the row so its task is created;
             // the guard is re-checked when the task completes.
             temp.push_back(&rule);
-        } else if (it->second == rule.getGuardValue()) {
+        }
+        else if (it->second == rule.getGuardValue())
+        {
             temp.push_back(&rule);
         }
     }
     return temp;
 }
- 

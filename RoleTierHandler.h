@@ -7,7 +7,7 @@
 class AssignmentRule;
 
 /**
- * @brief Handles one authority level in the approval chain.
+ * @brief Handles one authority level in the approval chain
  *
  * If the request is still open, this level is above the current holder, and
  * someone is at this level, the request is offered to that person. Otherwise

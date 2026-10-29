@@ -10,7 +10,7 @@
 //     }
 // }
 
-LeastLoadedAssignment::LeastLoadedAssignment(ParticipantRegistry* registry)
+LeastLoadedAssignment::LeastLoadedAssignment(ParticipantRegistry *registry)
     : registry(registry) {}
 
 LeastLoadedAssignment::~LeastLoadedAssignment() {}
@@ -28,21 +28,23 @@ LeastLoadedAssignment::~LeastLoadedAssignment() {}
 //     return best;
 // }
 
-Participant* LeastLoadedAssignment::assign(const Role& role) const {
-    Participant* bestChoice = nullptr;
+Participant *LeastLoadedAssignment::assign(const Role &role) const
+{
+    Participant *bestChoice = nullptr;
     int bestLoad = 0;
 
-    std::vector<Participant*> candidates = registry->byRole(role.getLevel());
+    std::vector<Participant *> candidates = registry->byRole(role.getLevel());
 
     for (std::size_t i = 0; i < candidates.size(); ++i)
     {
-        Participant* p = candidates[i];
-        
+        Participant *p = candidates[i];
+
         int load = registry->openTaskCount(p->getId());
- 
+
         bool better = (bestChoice == nullptr) || (load < bestLoad) || (load == bestLoad && p->getId() < bestChoice->getId());
-        
-        if (better) {
+
+        if (better)
+        {
             bestChoice = p;
             bestLoad = load;
         }

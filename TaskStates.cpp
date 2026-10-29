@@ -3,6 +3,7 @@
 
 TaskStates::~TaskStates() = default;
 
-bool TaskStates::isClosed() const {
+bool TaskStates::isClosed() const
+{
     return false;
 }

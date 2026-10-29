@@ -5,10 +5,11 @@
 
 class Participant;
 
-class AssignmentRule {
+class AssignmentRule
+{
 public:
     virtual ~AssignmentRule();
-    virtual Participant* assign(const Role& role) const = 0;
+    virtual Participant *assign(const Role &role) const = 0;
 };
 
 #endif // TIVIDY_ASSIGNMENTRULE_H

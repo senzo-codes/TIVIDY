@@ -18,12 +18,14 @@ WorkflowInstance::WorkflowInstance(int id, const std::string &name, const Workfl
  */
 WorkflowInstance::~WorkflowInstance()
 {
-    for (auto obs : observers) {
+    for (auto obs : observers)
+    {
         delete obs;
     }
     observers.clear();
 
-    for(TaskComponent* task : tasks) delete task;
+    for (TaskComponent *task : tasks)
+        delete task;
 
     tasks.clear();
 }
@@ -57,7 +59,7 @@ std::string WorkflowInstance::getStatus() const
 
 /**
  * @brief Changes the status.
- * @details Only the runner calls this. 
+ * @details Only the runner calls this.
  * @param status The status to set
  */
 void WorkflowInstance::setStatus(const std::string &status)
@@ -81,8 +83,10 @@ const WorkflowDefinition *WorkflowInstance::getDefinition() const
  */
 std::string WorkflowInstance::getData(const std::string &key) const
 {
-    for (const auto& entry : data) {
-        if (entry.first == key) {
+    for (const auto &entry : data)
+    {
+        if (entry.first == key)
+        {
             return entry.second;
         }
     }
@@ -94,19 +98,21 @@ std::string WorkflowInstance::getData(const std::string &key) const
  * @param key   The name of the data entry.
  * @param value The value to store for that key.
  */
-void WorkflowInstance::setData(const std::string& key, const std::string& value)
+void WorkflowInstance::setData(const std::string &key, const std::string &value)
 {
     DataMap::iterator it = data.find(key);
     std::string oldValue = (it == data.end()) ? std::string() : it->second;
-    if (it == data.end()) data[key] = value;
-    else it->second = value;
+    if (it == data.end())
+        data[key] = value;
+    else
+        it->second = value;
 
     logEvent(AuditType::DataChanged, name, "Data '" + key + "' changed from '" + oldValue + "' to '" + value + "'");
 }
 
-const DataMap& WorkflowInstance::getDataMap() const 
-{ 
-    return data; 
+const DataMap &WorkflowInstance::getDataMap() const
+{
+    return data;
 }
 
 /**
@@ -117,7 +123,7 @@ void WorkflowInstance::addTask(TaskComponent *task)
 {
     tasks.push_back(task);
 }
- 
+
 /**
  * @brief Keeps an observer alive for as long as this instance exists.
  * @param observer The observer to store.
@@ -133,8 +139,10 @@ void WorkflowInstance::addObserver(TaskObserver *observer)
  */
 void WorkflowInstance::removeTask(int taskId)
 {
-    for (size_t i = 0; i < tasks.size(); i++) {
-        if (tasks[i]->getId() == taskId) {
+    for (size_t i = 0; i < tasks.size(); i++)
+    {
+        if (tasks[i]->getId() == taskId)
+        {
             TaskComponent *task = tasks[i];
             tasks.erase(tasks.begin() + i);
             delete task;
@@ -151,15 +159,20 @@ void WorkflowInstance::removeTask(int taskId)
  */
 TaskComponent *WorkflowInstance::findTask(int taskId) const
 {
-    for (size_t i = 0; i < tasks.size(); i++) {
-        if (tasks[i]->getId() == taskId) {  
+    for (size_t i = 0; i < tasks.size(); i++)
+    {
+        if (tasks[i]->getId() == taskId)
+        {
             return tasks[i];
         }
-        TaskComposite *comp = dynamic_cast<TaskComposite*>(tasks[i]);
-        if (comp) {
-            for (auto j = 0; j < comp->childCount(); j++) {
+        TaskComposite *comp = dynamic_cast<TaskComposite *>(tasks[i]);
+        if (comp)
+        {
+            for (auto j = 0; j < comp->childCount(); j++)
+            {
                 TaskComponent *child = comp->getChild(j);
-                if (child->getId() == taskId) {
+                if (child->getId() == taskId)
+                {
                     return child;
                 }
             }
@@ -186,19 +199,24 @@ std::vector<TaskComponent *> WorkflowInstance::openLeafTasks() const
 {
     std::vector<TaskComponent *> subTasks;
 
-    for (size_t i = 0; i < tasks.size(); i++) {
-        TaskComposite *comp = dynamic_cast<TaskComposite*>(tasks[i]);
+    for (size_t i = 0; i < tasks.size(); i++)
+    {
+        TaskComposite *comp = dynamic_cast<TaskComposite *>(tasks[i]);
 
-        if (comp) {
-            for (auto j = 0; j < comp->childCount(); j++) {
+        if (comp)
+        {
+            for (auto j = 0; j < comp->childCount(); j++)
+            {
                 TaskComponent *child = comp->getChild(j);
-                if (!child->isClosed()) {
+                if (!child->isClosed())
+                {
                     subTasks.push_back(child);
                 }
             }
             continue;
         }
-        if (!tasks[i]->isClosed()) {  
+        if (!tasks[i]->isClosed())
+        {
             subTasks.push_back(tasks[i]);
         }
     }
@@ -217,7 +235,7 @@ void WorkflowInstance::logEvent(AuditType type, const std::string &actor, const 
     char buf[20];
     std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
 
-    auditLog.push_back(AuditEvent(buf,type, actor, detail));
+    auditLog.push_back(AuditEvent(buf, type, actor, detail));
 }
 
 /**

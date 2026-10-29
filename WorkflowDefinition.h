@@ -6,16 +6,18 @@
 #include <string>
 #include <vector>
 
-class WorkflowDefinition {
+class WorkflowDefinition
+{
 public:
-    WorkflowDefinition(const std::string& name, const std::string& initialStatus);
-    void addRule(const TransitionRule& rule);
+    WorkflowDefinition(const std::string &name, const std::string &initialStatus);
+    void addRule(const TransitionRule &rule);
     std::string getName() const;
     std::string getInitialStatus() const;
-    const TransitionRule* findRule(const std::string& status, const std::string& action,
-                                   const DataMap& data) const;
-    std::vector<const TransitionRule*> rulesFrom(const std::string& status,
-                                                 const DataMap& data) const;
+    const TransitionRule *findRule(const std::string &status, const std::string &action,
+                                   const DataMap &data) const;
+    std::vector<const TransitionRule *> rulesFrom(const std::string &status,
+                                                  const DataMap &data) const;
+
 private:
     std::string name;
     std::string initialStatus;

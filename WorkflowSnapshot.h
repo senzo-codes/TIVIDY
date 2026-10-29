@@ -3,11 +3,13 @@
 
 #include <string>
 
-class WorkflowSnapshot {
+class WorkflowSnapshot
+{
 public:
-    WorkflowSnapshot(const std::string& timestamp, const std::string& tasksData);
+    WorkflowSnapshot(const std::string &timestamp, const std::string &tasksData);
     std::string getTimestamp() const;
     std::string getTasksData() const;
+
 private:
     std::string timestamp;
     std::string tasksData;

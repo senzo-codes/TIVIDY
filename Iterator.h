@@ -3,11 +3,12 @@
 
 class TaskComponent;
 
-class Iterator {
+class Iterator
+{
 public:
     virtual ~Iterator();
     virtual bool hasNext() const = 0;
-    virtual TaskComponent* next() = 0;
+    virtual TaskComponent *next() = 0;
 };
 
 #endif // TIVIDY_ITERATOR_H

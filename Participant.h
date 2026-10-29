@@ -6,13 +6,15 @@
 
 class TaskComponent;
 
-class Participant {
+class Participant
+{
 public:
-    Participant(int id, const std::string& name, const Role& role);
+    Participant(int id, const std::string &name, const Role &role);
     int getId() const;
     std::string getName() const;
     Role getRole() const;
-    bool canHandle(const TaskComponent& task) const;
+    bool canHandle(const TaskComponent &task) const;
+
 private:
     int id;
     std::string name;
@@ -20,4 +22,3 @@ private:
 };
 
 #endif // TIVIDY_PARTICIPANT_H
- 

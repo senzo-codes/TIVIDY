@@ -4,6 +4,6 @@
 #include <map>
 #include <string>
 
-typedef std::map<std::string, std::string> DataMap;
+typedef std::map<std::string, std::string> DataMap ;
 
 #endif // TIVIDY_TYPES_H

@@ -7,7 +7,7 @@
  * @class Role
  * @brief An authority level and a display label.
  *
- * The level is what the engine compares. The name is only shown to the user.
+ * The level is what the engine compares. The name is only shown to the user
  * Level 0 is the automated role. Levels 1 and up are human, and a higher
  * number means more authority.
  */

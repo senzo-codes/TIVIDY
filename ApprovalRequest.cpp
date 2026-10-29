@@ -1,25 +1,26 @@
 #include "ApprovalRequest.h"
 
-ApprovalRequest::ApprovalRequest(int taskId, const Role& requiredRole, int requesterLevel)
+ApprovalRequest::ApprovalRequest(int taskId, const Role &requiredRole, int requesterLevel)
     : taskId(taskId),
-    requiredRole(requiredRole),
-    holderLevel(requesterLevel),
-    holderId(-1),
-    assignedTo(-1),
-    rejected(false)
-{}
+      requiredRole(requiredRole),
+      holderLevel(requesterLevel),
+      holderId(-1),
+      assignedTo(-1),
+      rejected(false)
+{
+}
 
 int ApprovalRequest::getTaskId() const
 {
     return taskId;
 }
 
-int ApprovalRequest::getHolderId() const 
+int ApprovalRequest::getHolderId() const
 {
     return holderId;
 }
 
-int ApprovalRequest::getHolderLevel() const 
+int ApprovalRequest::getHolderLevel() const
 {
     return holderLevel;
 }
@@ -35,17 +36,17 @@ void ApprovalRequest::accept(int participantId)
     assignedTo = participantId;
 }
 
-void ApprovalRequest::markRejected() 
+void ApprovalRequest::markRejected()
 {
     rejected = true;
 }
 
-bool ApprovalRequest::canBeAcceptedBy(int level) const 
+bool ApprovalRequest::canBeAcceptedBy(int level) const
 {
     return level >= requiredRole.getLevel();
 }
 
-bool ApprovalRequest::isOpen() const 
+bool ApprovalRequest::isOpen() const
 {
     return assignedTo == -1 && !rejected;
 }

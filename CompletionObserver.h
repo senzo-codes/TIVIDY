@@ -5,14 +5,16 @@
 
 class WorkflowRunner;
 
-class CompletionObserver : public TaskObserver {
+class CompletionObserver : public TaskObserver
+{
 public:
-    CompletionObserver(HumanTask* subject, WorkflowInstance* instance, WorkflowRunner* runner);
+    CompletionObserver(HumanTask *subject, WorkflowInstance *instance, WorkflowRunner *runner);
     ~CompletionObserver() override;
 
-    void update(HumanTask& task) override;
+    void update(HumanTask &task) override;
+
 private:
-    WorkflowRunner* runner;
+    WorkflowRunner *runner;
 };
 
 #endif // TIVIDY_COMPLETIONOBSERVER_H

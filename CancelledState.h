@@ -12,7 +12,8 @@ class HumanTask;
  *
  * Cancelled tasks are closed and do not accept further operations.
  */
-class CancelledState : public TaskStates {
+class CancelledState : public TaskStates
+{
 public:
     /**
      * @brief Rejects operations on a cancelled task and returns the next state.
@@ -20,7 +21,7 @@ public:
      * @param operation Operation that was attempted.
      * @return TaskStates* Pointer to the next state (typically throws an exception since cancelled states are terminal).
      */
-    TaskStates* handle(HumanTask& task, const std::string& operation) override;
+    TaskStates *handle(HumanTask &task, const std::string &operation) override;
 
     /**
      * @brief Gets the name of this state.

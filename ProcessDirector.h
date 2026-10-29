@@ -7,13 +7,15 @@
 class TaskBuilder;
 class TaskComponent;
 
-class ProcessDirector {
+class ProcessDirector
+{
 public:
-    explicit ProcessDirector(TaskBuilder* builder);
-    TaskComponent* constructTask(int id, const std::string& name, int assigneeId,
-                                 const std::string& dueDate, const Role& requiredRole);
+    explicit ProcessDirector(TaskBuilder *builder);
+    TaskComponent *constructTask(int id, const std::string &name, int assigneeId,
+                                 const std::string &dueDate, const Role &requiredRole);
+
 private:
-    TaskBuilder* builder;
+    TaskBuilder *builder;
 };
 
 #endif // TIVIDY_PROCESSDIRECTOR_H

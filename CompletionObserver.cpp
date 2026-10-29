@@ -6,24 +6,28 @@
 #include "TaskComposite.h"
 #include <stdexcept>
 
-CompletionObserver::CompletionObserver(HumanTask* subject, WorkflowInstance* instance, WorkflowRunner* runner)
-    : TaskObserver(subject, instance), runner(runner) {
-    if (this->runner == nullptr) {
+CompletionObserver::CompletionObserver(HumanTask *subject, WorkflowInstance *instance, WorkflowRunner *runner)
+    : TaskObserver(subject, instance), runner(runner)
+{
+    if (this->runner == nullptr)
+    {
         throw std::invalid_argument("Workflow Runner cannot be null");
     }
 }
 
 CompletionObserver::~CompletionObserver() = default;
 
-void CompletionObserver::update(HumanTask& task) {
-    if (task.getStatus() != "Completed") {
+void CompletionObserver::update(HumanTask &task)
+{
+    if (task.getStatus() != "Completed")
+    {
         return;
     }
 
+    TaskComponent *topTask = &task;
 
-    TaskComponent* topTask = &task;
-
-    if (task.getParent() != nullptr) {
+    if (task.getParent() != nullptr)
+    {
         topTask = task.getParent();
     }
 

@@ -5,18 +5,20 @@
 
 class WorkflowSnapshot;
 
-class SnapshotHistory {
+class SnapshotHistory
+{
 public:
     SnapshotHistory();
     ~SnapshotHistory();
-    SnapshotHistory(const SnapshotHistory&) = delete;
-    SnapshotHistory& operator=(const SnapshotHistory&) = delete;
+    SnapshotHistory(const SnapshotHistory &) = delete;
+    SnapshotHistory &operator=(const SnapshotHistory &) = delete;
 
-    void saveSnapshot(WorkflowSnapshot* snapshot);
-    const WorkflowSnapshot& restoreSnapshot(int index) const;
+    void saveSnapshot(WorkflowSnapshot *snapshot);
+    const WorkflowSnapshot &restoreSnapshot(int index) const;
     int count() const;
+
 private:
-    std::vector<WorkflowSnapshot*> snapshots;
+    std::vector<WorkflowSnapshot *> snapshots;
 };
 
 #endif // TIVIDY_SNAPSHOTHISTORY_H

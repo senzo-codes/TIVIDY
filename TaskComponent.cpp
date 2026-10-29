@@ -11,13 +11,25 @@ TaskComponent::TaskComponent(int id, const string &name, const Role &requiredRol
 
 TaskComponent::~TaskComponent() {}
 
-int TaskComponent::getId() const { return id; }
+int TaskComponent::getId() const
+{
+    return id;
+}
 
-string TaskComponent::getName() const { return name; }
+string TaskComponent::getName() const
+{
+    return name;
+}
 
-Role TaskComponent::getRequiredRole() const { return requiredRole; }
+Role TaskComponent::getRequiredRole() const
+{
+    return requiredRole;
+}
 
-TaskComposite *TaskComponent::getParent() const { return parent; }
+TaskComposite *TaskComponent::getParent() const
+{
+    return parent;
+}
 
 void TaskComponent::setParent(TaskComposite *parent)
 {

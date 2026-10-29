@@ -8,7 +8,7 @@ RequestHandler::~RequestHandler()
     delete successor;
 }
 
-void RequestHandler::setSuccessor(RequestHandler* successor)
+void RequestHandler::setSuccessor(RequestHandler *successor)
 {
     this->successor = successor;
 }

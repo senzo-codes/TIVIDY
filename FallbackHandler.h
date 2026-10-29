@@ -24,7 +24,7 @@ public:
 
     /**
      * @brief Rejects the request if it is still open.
-     * @param request The approval request to reject. It is changed in place.
+     * @param request The approval request to reject. It is changed in place
      */
     void handle(ApprovalRequest &request) override;
 };

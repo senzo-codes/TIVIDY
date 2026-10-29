@@ -18,37 +18,39 @@ class TaskComponent;
 class TaskObserver;
 class WorkflowDefinition;
 
-class WorkflowInstance {
+class WorkflowInstance
+{
 public:
-    WorkflowInstance(int id, const std::string& name, const WorkflowDefinition* definition);
+    WorkflowInstance(int id, const std::string &name, const WorkflowDefinition *definition);
     ~WorkflowInstance();
-    WorkflowInstance(const WorkflowInstance&) = delete;
-    WorkflowInstance& operator=(const WorkflowInstance&) = delete;
+    WorkflowInstance(const WorkflowInstance &) = delete;
+    WorkflowInstance &operator=(const WorkflowInstance &) = delete;
 
     int getId() const;
     std::string getName() const;
     std::string getStatus() const;
-    void setStatus(const std::string& status);
-    const WorkflowDefinition* getDefinition() const;
-    std::string getData(const std::string& key) const;
-    const DataMap& getDataMap() const;
-    void setData(const std::string& key, const std::string& value);
-    void addTask(TaskComponent* task);
-    void addObserver(TaskObserver* observer);
+    void setStatus(const std::string &status);
+    const WorkflowDefinition *getDefinition() const;
+    std::string getData(const std::string &key) const;
+    const DataMap &getDataMap() const;
+    void setData(const std::string &key, const std::string &value);
+    void addTask(TaskComponent *task);
+    void addObserver(TaskObserver *observer);
     void removeTask(int taskId);
-    TaskComponent* findTask(int taskId) const;
-    const std::vector<TaskComponent*>& getTasks() const;
-    std::vector<TaskComponent*> openLeafTasks() const;
-    void logEvent(AuditType type, const std::string& actor, const std::string& detail);
-    const std::vector<AuditEvent>& getAuditLog() const;
+    TaskComponent *findTask(int taskId) const;
+    const std::vector<TaskComponent *> &getTasks() const;
+    std::vector<TaskComponent *> openLeafTasks() const;
+    void logEvent(AuditType type, const std::string &actor, const std::string &detail);
+    const std::vector<AuditEvent> &getAuditLog() const;
+
 private:
     int id;
     std::string name;
     std::string status;
-    const WorkflowDefinition* definition;
+    const WorkflowDefinition *definition;
     DataMap data;
-    std::vector<TaskComponent*> tasks;
-    std::vector<TaskObserver*> observers;
+    std::vector<TaskComponent *> tasks;
+    std::vector<TaskObserver *> observers;
     std::vector<AuditEvent> auditLog;
 };
 

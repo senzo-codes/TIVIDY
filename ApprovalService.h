@@ -24,7 +24,7 @@ public:
     /**
      * @brief Creates the service and builds the handler chain for the current roster.
      * @param registry The participants. Not owned.
-     * @param rule     The rule used to find a person at each level. Not owned.
+     * @param rule     The rule used to find a person at each level. Not owned
      */
     ApprovalService(ParticipantRegistry *registry, AssignmentRule *rule);
 

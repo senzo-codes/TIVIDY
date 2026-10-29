@@ -13,7 +13,7 @@ Participant::Participant(int id, const std::string &name, const Role &role)
 /**
  * @brief An ID getter
  * @return It returns the user's ID
- */  
+ */
 int Participant::getId() const
 {
     return id;
@@ -22,7 +22,7 @@ int Participant::getId() const
 /**
  * @brief A name getter method
  * @return It returns the user's name
- */  
+ */
 std::string Participant::getName() const
 {
     return name;
@@ -31,7 +31,7 @@ std::string Participant::getName() const
 /**
  * @brief A role getter method
  * @return It returns the user's role
- */  
+ */
 Role Participant::getRole() const
 {
     return role;
@@ -41,9 +41,8 @@ Role Participant::getRole() const
  * @brief An ID getter
  * @param task Task component that the method evaluates to see if the user can handle it.
  * @return It returns the user ID
- */  
+ */
 bool Participant::canHandle(const TaskComponent &task) const
 {
     return role.getLevel() >= task.getRequiredRole().getLevel();
 }
- 

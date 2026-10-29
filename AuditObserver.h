@@ -5,14 +5,16 @@
 
 class ParticipantRegistry;
 
-class AuditObserver : public TaskObserver {
+class AuditObserver : public TaskObserver
+{
 public:
-    AuditObserver(HumanTask* subject, WorkflowInstance* instance, ParticipantRegistry* registry);
+    AuditObserver(HumanTask *subject, WorkflowInstance *instance, ParticipantRegistry *registry);
     ~AuditObserver() override;
 
-    void update(HumanTask& task) override;
+    void update(HumanTask &task) override;
+
 private:
-    ParticipantRegistry* registry;
+    ParticipantRegistry *registry;
 };
 
 #endif // TIVIDY_AUDITOBSERVER_H
