@@ -36,6 +36,7 @@ public:
     void startTask(int instanceId, int taskId, int participantId);
     void completeTask(int instanceId, int taskId, int participantId);
     void cancelInstance(int instanceId);
+    void setPriority(int instanceId, int taskId, bool priority);
     
     ApprovalRequest* requestApproval(int instanceId, int taskId, int participantId);
     void acceptRequest(int instanceId, ApprovalRequest* request, int participantId);
@@ -45,6 +46,9 @@ public:
     void restoreSnapshot(int index);
     
     PendingTaskIterator dashboardFor(int participantId);
+
+    // DEBUGGING
+    int snapshotCount() const;
 
 private:
     std::string serializeInstances() const;

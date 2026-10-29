@@ -7,7 +7,7 @@ enum class AuditType {
     TaskStarted, TaskDone, SubtaskDone, TaskCancelled,
     StatusChanged, OptionCancelled,
     ApprovalRequested, PassedUp, ApprovalAccepted, ApprovalRejected,
-    TaskReassigned, DataChanged, Refused
+    TaskReassigned, DataChanged, Refused, PriorityChanged
 };
 
 #endif // TIVIDY_AUDITTYPE_H
