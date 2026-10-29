@@ -1,6 +1,0 @@
-#include "HumanTask.h"
-#include "PendingState.h"
-#include "InProgressState.h"
-#include "CompletedState.h"
-#include "CancelledState.h"
-#include "TaskObserver.h"
