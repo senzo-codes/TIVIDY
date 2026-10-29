@@ -1,0 +1,21 @@
+# Car insurance claim: workflow file
+# workflow,<name>,<starting status>
+# person,<id>,<name>,<level>,<role name>
+# rule,<from>,<action>,<to>,<level>,<guard field>,<guard value>,<due days>,<[parallel subtasks]>
+# Level 0 is the automated role. Empty guard fields mean the rule always applies.
+
+workflow,Car Insurance Claim,Registered
+
+person,1,Senzo,1,Claims Handler
+person,2,Njabulo,1,Claims Handler
+person,3,Liam,2,Senior Assessor
+person,4,Tebello,3,Claims Manager
+
+rule,Registered,Verify policy,Verified,1,,,2,[]
+rule,Registered,Reject claim,Rejected,2,,,2,[]
+rule,Verified,Assess damage,Assessed,2,,,3,[Inspect vehicle;Estimate repair cost]
+rule,Assessed,Auto fraud check,Under Investigation,0,fraudFlag,yes,0,[]
+rule,Assessed,Review claim,Approved,2,,,2,[]
+rule,Under Investigation,Clear claim,Approved,3,,,5,[]
+rule,Under Investigation,Reject claim,Rejected,3,,,5,[]
+rule,Approved,Pay claim,Paid,3,,,5,[]
