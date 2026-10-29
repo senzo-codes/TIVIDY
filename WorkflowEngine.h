@@ -47,6 +47,9 @@ public:
     
     PendingTaskIterator dashboardFor(int participantId);
 
+    // DEBUGGING
+    int snapshotCount() const;
+
 private:
     std::string serializeInstances() const;
 

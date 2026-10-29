@@ -934,29 +934,73 @@ void cancelCaseScreen(Session& s)
     }
 }
 
+// void saveSnapshotScreen(Session& s)
+// {
+//     try {
+//         s.engine.saveSnapshot();
+//         setMessage(s, MSG_OK, "Snapshot saved. Use option 8 to go back to it later.");
+//     } catch (const std::exception& e) {
+//         setMessage(s, MSG_ERROR, e.what());
+//     }
+// }
+
 void saveSnapshotScreen(Session& s)
 {
     try {
         s.engine.saveSnapshot();
-        setMessage(s, MSG_OK, "Snapshot saved. Use option 8 to go back to it later.");
+        int index = s.engine.snapshotCount() - 1;
+        setMessage(s, MSG_OK, "Snapshot " + std::to_string(index) +
+                   " saved. Use option 8 and type " + std::to_string(index) + " to restore it.");
     } catch (const std::exception& e) {
         setMessage(s, MSG_ERROR, e.what());
     }
 }
 
+// void restoreSnapshotScreen(Session& s)
+// {
+//     drawHeader(s, "RESTORE A SNAPSHOT");
+//     panelTop("SNAPSHOTS");
+//     panelRow("Snapshots are numbered from 0, in the order they were saved.");
+//     panelRow("Restoring puts every case back to how it was when the snapshot was saved.", DIM);
+//     panelBottom();
+//     int index = promptInt("Snapshot number (0 is the first one saved): ");
+//     try {
+//         s.engine.restoreSnapshot(index);
+//         setMessage(s, MSG_OK, "Snapshot " + std::to_string(index) + " restored.");
+//     } catch (const std::exception& e) {
+//         setMessage(s, MSG_ERROR, "Snapshot " + std::to_string(index) + " does not exist. Save one first (option 7).");
+//     }
+// }
+
 void restoreSnapshotScreen(Session& s)
 {
     drawHeader(s, "RESTORE A SNAPSHOT");
     panelTop("SNAPSHOTS");
-    panelRow("Snapshots are numbered from 0, in the order they were saved.");
+    int count = s.engine.snapshotCount();
+    if (count == 0) {
+        panelRow("No snapshots saved yet. Use option 7 first.", RED);
+    } else {
+        panelRow("Saved snapshots: " + std::to_string(count) +
+                 "  (valid numbers: 0 to " + std::to_string(count - 1) + ")");
+    }
     panelRow("Restoring puts every case back to how it was when the snapshot was saved.", DIM);
     panelBottom();
+    if (count == 0) {
+        prompt("Press Enter to return.");
+        return;
+    }
+
     int index = promptInt("Snapshot number (0 is the first one saved): ");
+    if (index < 0) {
+        setMessage(s, MSG_ERROR, "Enter a number from 0 to " + std::to_string(count - 1) + ".");
+        return;
+    }
     try {
         s.engine.restoreSnapshot(index);
         setMessage(s, MSG_OK, "Snapshot " + std::to_string(index) + " restored.");
-    } catch (const std::exception& e) {
-        setMessage(s, MSG_ERROR, "Snapshot " + std::to_string(index) + " does not exist. Save one first (option 7).");
+    } catch (const std::exception&) {
+        setMessage(s, MSG_ERROR, "There is no snapshot " + std::to_string(index) +
+                   ". Valid numbers: 0 to " + std::to_string(count - 1) + ".");
     }
 }
 
