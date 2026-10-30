@@ -1,0 +1,170 @@
+TIVITY - RUNNING THE SYSTEM WITH DOCKER
+
+1.  DOES DOCKER MAKE THE SYSTEM PORTABLE?
+
+Yes. Docker lets team members build and run TIVITY in a consistent Linux
+environment without installing the C++ compiler or C++ build tools on
+their own machines.
+
+Each team member still needs Docker installed and must have a copy of
+the project files. The project should include the Dockerfile and
+.dockerignore in its root folder, alongside the C++ source and header
+files.
+
+Docker reduces environment setup problems, but it cannot automatically
+provide external services, databases, configuration files, credentials,
+or other resources that the application may require. Those must be
+supplied separately if TIVITY depends on them.
+
+2.  WHAT EACH TEAM MEMBER NEEDS
+
+-   The TIVITY project, obtained from the team’s shared Git repository.
+-   Docker Desktop (Windows or macOS), or Docker Engine (Linux).
+-   A running Docker service/daemon.
+-   An internet connection the first time they build, so Docker can
+    download the Ubuntu base image and required packages.
+
+They do NOT need to install g++ or Ubuntu directly on their computer.
+
+3.  GET THE PROJECT
+
+If the project is hosted in Git, clone it using the team’s repository
+URL:
+
+    git clone <TEAM-REPOSITORY-URL>
+
+Enter the project folder (use the actual folder name if different):
+
+    cd TIVIDY
+
+Make sure these files are in the project root:
+
+    Dockerfile
+    .dockerignore
+    [the C++ .cpp and .h files]
+
+The Dockerfile currently compiles all .cpp files in this folder using
+C++11, so keep the source files in the expected project location.
+
+4.  CHECK THAT DOCKER IS RUNNING
+
+Run:
+
+    docker --version
+    docker info
+
+The first command should display the installed Docker version. The
+second should show Docker engine information. If it reports that it
+cannot connect to the Docker daemon, start Docker Desktop or the Docker
+service and try again.
+
+5.  BUILD THE TIVITY IMAGE
+
+From the project root (the folder containing the Dockerfile), run:
+
+    docker build -t tivity-app .
+
+The first build may take several minutes because Docker downloads Ubuntu
+and installs the C++ compiler. Later builds may be faster because Docker
+can reuse cached build layers.
+
+A successful build ends with output similar to:
+
+    Successfully built <IMAGE-ID>
+    Successfully tagged tivity-app:latest
+
+Compiler warnings about unused parameters are not necessarily build
+failures. A successful build must complete without a compiler error.
+
+6.  RUN TIVITY
+
+Run the application with:
+
+    docker run --rm tivity-app
+
+If the program needs keyboard input through the terminal, run it with
+interactive terminal support:
+
+    docker run -it --rm tivity-app
+
+The –rm option removes the stopped container after the program exits. It
+does not remove the built Docker image.
+
+7.  REBUILD AFTER CODE CHANGES
+
+After pulling or making code changes, rebuild the image:
+
+    docker build -t tivity-app .
+
+Then run it again:
+
+    docker run -it --rm tivity-app
+
+Use the non-interactive command without -it if the program does not need
+terminal input.
+
+8.  USEFUL DOCKER COMMANDS
+
+List local images:
+
+    docker images
+
+List running containers:
+
+    docker ps
+
+List all containers, including stopped ones:
+
+    docker ps -a
+
+Remove the local TIVITY image (only if you want to rebuild it from
+scratch):
+
+    docker rmi tivity-app
+
+9.  COMMON ISSUES
+
+“Docker daemon is not running” - Start Docker Desktop or the Docker
+service, then retry.
+
+“Cannot find Dockerfile” - Run the build command from the project
+root. - Confirm the file is named exactly Dockerfile, with no .txt
+extension.
+
+“g++: fatal error: … No such file or directory” - Check that all
+required .cpp files are in the project root and were included in the Git
+checkout. - Check whether the source files require additional build or
+link commands.
+
+“undefined reference to …” - This is a C++ linking error. It may mean a
+required implementation file is missing, a library needs to be linked,
+or the project cannot be built by compiling every .cpp file with the
+current command. The Dockerfile will need to be adjusted to match the
+project’s actual build requirements.
+
+“The program starts but cannot find a file / connect to a service” -
+Check whether the application expects configuration files, data files,
+environment variables, a database, or another service. These are not
+automatically included unless the team deliberately provides them.
+
+10. IMPORTANT TEAM NOTES
+
+-   Commit and share both Dockerfile and .dockerignore in the
+    repository.
+-   Share source changes through the team’s normal Git workflow.
+-   Each team member builds the image locally with the same command.
+-   Do not put passwords, API keys, or other secrets into the Dockerfile
+    or commit them to Git.
+-   If the application needs persistent data, configuration, network
+    access, or other services, agree on how those will be provided to
+    every team member.
+-   The current Dockerfile creates a Linux image. Team members can use
+    it from Windows, macOS, or Linux if Docker is installed and their
+    machine’s architecture is supported by the image.
+
+In short: 1. Install and start Docker. 2. Clone or update the TIVITY
+repository. 3. Open a terminal in the folder containing the Dockerfile.
+4. Run: docker build -t tivity-app . 5. Run: docker run -it –rm
+tivity-app
+
+TIVITY is then running inside its Docker container.
