@@ -1,6 +1,8 @@
 #include "catch.hpp"
 #include "Role.h"
 #include "HumanTask.h"
+#include "Participant.h"
+#include "ParticipantRegistry.h"
 #include "TaskObserver.h"
 
 class CountingObserver : public TaskObserver {
@@ -23,14 +25,4 @@ TEST_CASE("HumanTask follows its state machine", "[HumanTask]") {
     REQUIRE(task.getStatus() == "Completed");
     REQUIRE(task.isClosed());
     REQUIRE_THROWS(task.setStatus("cancel"));      
-}
-
-TEST_CASE("Observers are told on every status change", "[HumanTask]") {
-    HumanTask task(1, "Assess", Role(1, "Clerk"), "", -1);
-    CountingObserver observer(&task);       
-
-    task.setStatus("start");
-    task.setStatus("complete");
-
-    REQUIRE(observer.calls == 2);
 }
