@@ -2,9 +2,9 @@ name: TIVIDY C++ CI
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "Dev" ]
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "Dev" ]
 
 jobs:
   build-and-test:
