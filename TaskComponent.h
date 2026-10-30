@@ -3,6 +3,7 @@
 
 #include "Role.h"
 #include <string>
+#include "WorkflowSnapshot.h"
 
 class TaskComposite;
 
@@ -27,6 +28,8 @@ public:
     virtual void add(TaskComponent *child);
     virtual void remove(TaskComponent *child);
     virtual TaskComponent *getChild(int index) const;
+
+    friend class WorkflowSnapshot;
 
 protected:
     int id;
