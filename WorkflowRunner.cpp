@@ -20,7 +20,10 @@ namespace
 {
     std::string addDays(const std::string &ymd, int days)
     {
-        if (ymd.empty() || days <= 0)
+        // Zero means "no due date". Negative offsets intentionally produce a
+        // date before today so a workflow definition can create an already
+        // overdue task.
+        if (ymd.empty() || days == 0)
             return std::string();
         std::tm tm = {};
         if (std::sscanf(ymd.c_str(), "%d-%d-%d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday) != 3)
