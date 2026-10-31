@@ -39,5 +39,5 @@ TEST_CASE("completeTask completes the task and moves the status", "[completeTask
 
     REQUIRE(task->getStatus() == "Completed");
     REQUIRE(inst.getStatus() == "Assessed");
-    REQUIRE(reg.openTaskCount(1) == -1);
+    REQUIRE(reg.openTaskCount(1) == 0);
 }
