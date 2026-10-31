@@ -15,6 +15,14 @@ $(TARGET): $(OBJS)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+
+TEST_SRCS = $(wildcard tests/*.cpp)
+LIB_SRCS  = $(filter-out main.cpp, $(SRCS))
+
+test: $(TEST_SRCS) $(LIB_SRCS)
+	$(CXX) -std=c++11 -g -I. -Itests $^ -o tests/run_tests
+	./tests/run_tests
+	
 # Automatically builds the target first, then runs it
 run: $(TARGET)
 	./TIVIDY
