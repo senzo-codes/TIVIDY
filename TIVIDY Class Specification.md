@@ -1,4 +1,4 @@
-# TIVIDY: Class Specification v4 (C++11)
+# TIVIDY: Class Specification v5 (C++11)
 
 Based on `TIVIDY_Sytem_Design_v4.pdf`, with the decisions made in review. Each property and method has a plain-English explanation after the dash.
 
@@ -29,15 +29,16 @@ Rules for every class:
 
 ## Behaviour rules
 
-1. **New human tasks start at the lowest level that has someone in it.** They are given to the least busy person at that level. If that level is empty, the search moves up one level at a time.
-2. **Authority.** A person can start or complete a task only if they are its assignee and their level is at least the task's required level.
+1. **Tasks start at the bottom.** New human tasks are **always** assigned to the lowest level that has someone in it (usually Level 1). They are given to the least busy person at that level. 
+2. **Authority.** A person can start or complete a task only if they are its assignee and their level is at least the task's required level. If the task is assigned to a Level 1 person but requires Level 3, the Level 1 person cannot do it.
 3. **Request, don't act.** A person without the authority can only ask for approval. Asking when they already have the authority is refused.
-4. **One holder at a time.** An approval request is offered to one person. That person can accept it only if their level meets the required level. Otherwise they pass it up to the next level. The last handler in the chain rejects it, and the task stays with the person who asked.
-5. **Locked while asking.** A task cannot be completed while an approval request for it is open.
-6. **The definition decides the next status.** When a task finishes, the definition chooses the next status. A row with a guard applies only when the instance's data has the guard's value. Other open alternatives are cancelled.
-7. **Parallel subtasks.** A composite is completed when all of its subtasks are completed. Completing the last one moves the workflow on.
-8. **Automated tasks run themselves.** The engine runs them straight away and then moves on.
-9. **Everything is logged.** Each event goes into the instance's audit log.
+4. **One holder at a time.** An approval request is offered to one person at a time. That person can accept it only if their level meets the required level. If they do not have the authority (or choose not to accept), they pass it up to the next level.
+5. **Top of the chain.** If the request reaches the top level and is passed up again, the `FallbackHandler` rejects it. The task remains with the original assignee.
+6. **Locked while asking.** A task cannot be completed while an approval request for it is open.
+7. **The definition decides the next status.** When a task finishes, the definition chooses the next status. A row with a guard applies only when the instance's data has the guard's value. Other open alternatives are cancelled.
+8. **Parallel subtasks.** A composite is completed when all of its subtasks are completed. Completing the last one moves the workflow on.
+9. **Automated tasks run themselves.** The engine runs them straight away and then moves on.
+10. **Everything is logged.** Each event goes into the instance's audit log.
 
 ---
 
@@ -122,20 +123,20 @@ Methods:
 Attributes:
 - `-assigneeId : int` — The person it is given to, or -1 if nobody.
 - `-dueDate : string` — The deadline as `YYYY-MM-DD`, or empty if there is none.
-- `-currentState : TaskStates*` — Points to the shared state object for the current status.
+- `-currentState : TaskStates*` — Points to the state object for the current status. The task owns this state.
 - `-priority : bool` — True if the user marked it as a priority.
 - `-observers : vector<TaskObserver*>` (non-owning) — The observers to tell when the status changes.
 
 Methods:
 - `+HumanTask(id : int, name : const string&, requiredRole : const Role&, dueDate : const string&, assigneeId : int)` NV — Creates the task in the Pending state.
-- `+~HumanTask()` O — Destroys the task. Observers remove themselves in their own destructors.
+- `+~HumanTask()` O — Destroys the task and deletes its current state. Observers remove themselves in their own destructors.
 - `+assign(participantId : int) : void` O — Sets the assignee. Only `ParticipantRegistry::assign` calls this.
 - `+getAssignee() : int` O *(const)* — Returns the assignee's id.
 - `+getDueDate() : string` O *(const)* — Returns the due date.
 - `+getStatus() : string` O *(const)* — Returns the name of the current state.
-- `+setStatus(operation : const string&) : void` O — Asks the current state to apply the operation, then tells the observers. This is the only way the status changes.
+- `+setStatus(operation : const string&) : void` O — Asks the current state to apply the operation, deletes the old state, sets the new state, then tells the observers. This is the only way the status changes.
 - `+isClosed() : bool` O *(const)* — True when the current state is Completed or Cancelled.
-- `+setState(state : TaskStates*) : void` NV — Changes the current state. Called only from inside the state classes.
+- `+setState(state : TaskStates*) : void` NV — Changes the current state, deleting the old one. Called only from inside the state classes.
 - `+isPriority() : bool` NV *(const)* — Returns the priority flag.
 - `+setPriority(priority : bool) : void` NV — Sets the priority flag.
 - `+attach(observer : TaskObserver*) : void` NV — Adds an observer to the list. Called from the observer's constructor.
@@ -190,33 +191,29 @@ Decision: a composite can only sit at the top level. The runner never puts a com
 
 Methods:
 - `+~TaskStates()` V — Virtual destructor.
-- `+handle(task : HumanTask&, operation : const string&) : void` **PV** — Decides whether the operation is allowed from this state. If it is, it moves the task to the next state. If not, it throws.
+- `+handle(task : HumanTask&, operation : const string&) : TaskStates*` **PV** — Decides whether the operation is allowed from this state. If it is, it returns a new state object. If not, it throws.
 - `+getName() : string` **PV** *(const)* — Returns the status text.
 - `+isClosed() : bool` V *(const)* — True if this state means the task is finished. The default is false.
 
-The four states are shared singletons. Every task points at the same object for each state, so no state is created per task.
+The four states are managed dynamically. The `HumanTask` owns its current state and deletes it when transitioning to a new state.
 
 ### PendingState : TaskStates
-- `+instance() : PendingState&` NV *(static)* — Returns the one shared Pending object.
-- `+handle(task, operation) : void` O — `start` moves to InProgress, `cancel` moves to Cancelled. Anything else throws.
+- `+handle(task, operation) : TaskStates*` O — `start` returns a new `InProgressState`, `cancel` returns a new `CancelledState`. Anything else throws.
 - `+getName() : string` O *(const)* — Returns "Pending".
 - `+isClosed() : bool` O *(const)* — Returns false.
 
 ### InProgressState : TaskStates
-- `+instance() : InProgressState&` NV *(static)* — Returns the one shared InProgress object.
-- `+handle(task, operation) : void` O — `complete` moves to Completed, `cancel` moves to Cancelled. Anything else throws.
+- `+handle(task, operation) : TaskStates*` O — `complete` returns a new `CompletedState`, `cancel` returns a new `CancelledState`. Anything else throws.
 - `+getName() : string` O *(const)* — Returns "InProgress".
 - `+isClosed() : bool` O *(const)* — Returns false.
 
 ### CompletedState : TaskStates
-- `+instance() : CompletedState&` NV *(static)* — Returns the one shared Completed object.
-- `+handle(task, operation) : void` O — Always throws. A completed task cannot change.
+- `+handle(task, operation) : TaskStates*` O — Always throws. A completed task cannot change.
 - `+getName() : string` O *(const)* — Returns "Completed".
 - `+isClosed() : bool` O *(const)* — Returns true.
 
 ### CancelledState : TaskStates
-- `+instance() : CancelledState&` NV *(static)* — Returns the one shared Cancelled object.
-- `+handle(task, operation) : void` O — Always throws. A cancelled task cannot change.
+- `+handle(task, operation) : TaskStates*` O — Always throws. A cancelled task cannot change.
 - `+getName() : string` O *(const)* — Returns "Cancelled".
 - `+isClosed() : bool` O *(const)* — Returns true.
 
@@ -236,7 +233,7 @@ Methods:
 - `+~Decorator()` V — Does not delete the wrapped task.
 - `+getWrapped() : TaskComponent*` NV *(const)* — Returns the task being decorated.
 - `+decorationLabel() : string` **PV** *(const)* — Returns the label text, or empty.
-- `+getId()`, `getName()`, `getRequiredRole()`, `getParent()`, `setParent()`, `getAssignee()`, `assign()`, `getDueDate()`, `getStatus()`, `setStatus()`, `isClosed()`, `add()`, `remove()`, `getChild()` — **O**. Each one passes the call straight to the wrapped task, so the decorator behaves like the task.
+- `+getId()`, `+getName()`, `+getRequiredRole()`, `+getParent()`, `+setParent()`, `+getAssignee()`, `+assign()`, `+getDueDate()`, `+getStatus()`, `+setStatus()`, `+isClosed()`, `+add()`, `+remove()`, `+getChild()` — **O**. Each one passes the call straight to the wrapped task, so the decorator behaves like the task.
 - `+printTaskInfo() : void` O *(const)* — Prints the wrapped task's row, then adds `[label]` if there is a label.
 
 ### PriorityDecorator : Decorator
@@ -350,10 +347,10 @@ One handler per level, so each step goes up one level at a time.
 - `-tierRole : Role` — The level this handler covers.
 - `-rule : AssignmentRule*` (non-owning) — Used to find someone at this level.
 - `+RoleTierHandler(tierRole : const Role&, rule : AssignmentRule*)` NV — Creates the handler.
-- `+handle(request : ApprovalRequest&) : void` O — If the request is open, this level is above the current holder, and someone is found here, offers the request to them. Otherwise passes it to the successor.
+- `+handle(request : ApprovalRequest&) : void` O — If the request is open, this level is strictly above the current holder, and someone is found here, offers the request to them. Otherwise passes it to the successor.
 
 ### FallbackHandler : RequestHandler
-- `+handle(request : ApprovalRequest&) : void` O — The end of the chain. If the request is still open, rejects it. The approval service writes the audit entry.
+- `+handle(request : ApprovalRequest&) : void` O — The end of the chain. If the request is still open, rejects it. The approval service writes the audit entry. The task remains with the original Level 1 assignee.
 
 ### ApprovalService
 Attributes:
@@ -366,9 +363,9 @@ Methods:
 - `+ApprovalService(registry : ParticipantRegistry*, rule : AssignmentRule*)` NV — Builds the chain: one tier handler for each level from 2 up to the highest level in use, then a fallback handler.
 - `+~ApprovalService()` V — Deletes the requests and the chain.
 - `+rebuildChain() : void` NV — Builds the chain again. The engine calls this whenever someone is added, so the chain always matches the roster.
-- `+request(instance : WorkflowInstance&, task : TaskComponent*, requester : Participant&) : ApprovalRequest*` NV — Creates a request for a task the requester cannot do. Refused if the requester is the assignee's superior or if a request is already open. Offers the request up the chain and logs the result.
-- `+accept(instance : WorkflowInstance&, request : ApprovalRequest*, participant : Participant&) : void` NV — The holder accepts. Refused unless the person is the holder and their level is high enough. Reassigns the task to them and logs it.
-- `+passUp(instance : WorkflowInstance&, request : ApprovalRequest*, participant : Participant&) : void` NV — The holder passes it up. Refused unless the person is the holder. Sends it to the next level, and logs the result.
+- `+request(instance : WorkflowInstance&, task : TaskComponent*, requester : Participant&) : ApprovalRequest*` NV — Creates a request for a task the requester cannot do. Refused if the requester is not the assignee or already has the level. Offers the request up the chain and logs the result.
+- `+accept(instance : WorkflowInstance&, request : ApprovalRequest*, participant : Participant&) : void` NV — The holder accepts. Refused unless the person is the holder and their level meets the required level. Reassigns the task to them and logs it.
+- `+passUp(instance : WorkflowInstance&, request : ApprovalRequest*, participant : Participant&) : void` NV — The holder passes it up. Refused unless the person is the holder. Sends it to the next level, and logs the result. If the fallback rejects it, the task stays with the original assignee.
 - `+openRequestFor(taskId : int) : ApprovalRequest*` NV *(const)* — Returns the open request for that task, or `nullptr`. The runner uses this to check for a lock.
 
 ---
@@ -381,7 +378,7 @@ Attributes:
 - `-action : string` — The action that triggers the row.
 - `-toStatus : string` — The status it moves to.
 - `-requiredRole : Role` — The level needed for the task this row creates.
-- `-guardKey : string` — The data field this row checks, such as `fraudFlag`. Empty means no guard. If the field is not set yet, the row still creates its task, and the guard decides the next status when the task completes.
+- `-guardKey : string` — The data field this row checks, such as `fraudFlag`. Empty means no guard.
 - `-guardValue : string` — The value the field must have, such as `yes`.
 - `-dueDays : int` — Days until the task is due. Zero means no due date. Negative means already overdue.
 - `-parallelSubtasks : vector<string>` — Names of subtasks. Empty means one task.
@@ -393,6 +390,9 @@ Methods:
 - `+getRequiredRole() : Role` NV *(const)* — Returns the level needed.
 - `+getDueDays() : int` NV *(const)* — Returns the days until due.
 - `+getParallelSubtasks() : const vector<string>&` NV *(const)* — Returns the subtask names.
+- `+hasGuard() : bool` NV *(const)* — True if `guardKey` is not empty.
+- `+getGuardKey() : const string&` NV *(const)* — Returns the guard key.
+- `+getGuardValue() : const string&` NV *(const)* — Returns the guard value.
 
 ### WorkflowDefinition
 Attributes:
@@ -418,7 +418,7 @@ Attributes:
 - `-name : string` — The name shown to the user.
 - `-status : string` — The current status.
 - `-definition : const WorkflowDefinition*` (non-owning) — The definition this instance follows.
-- `-data : DataMap` — The case's input data as text key/value pairs, such as `fraudFlag = yes`. Guards read it. The meaning of each field is up to the industry.
+- `-data : DataMap` — The case's input data as text key/value pairs, such as `fraudFlag = yes`. Guards read it.
 - `-tasks : vector<TaskComponent*>` (owned) — The top-level tasks.
 - `-observers : vector<TaskObserver*>` (owned) — The observers attached to this instance's tasks. Deleted before the tasks.
 - `-auditLog : vector<AuditEvent>` — The history of this instance.
@@ -432,6 +432,7 @@ Methods:
 - `+setStatus(status : const string&) : void` NV — Changes the status. Only the runner calls this.
 - `+getDefinition() : const WorkflowDefinition*` NV *(const)* — Returns the definition.
 - `+getData(key : const string&) : string` NV *(const)* — Returns the value stored under that key, or empty text if there is none.
+- `+getDataMap() : const DataMap&` NV *(const)* — Returns the entire data map. Used by the runner to evaluate guards.
 - `+setData(key : const string&, value : const string&) : void` NV — Stores a value and logs `DataChanged` with the old and new values.
 - `+addTask(task : TaskComponent*) : void` NV — Adds a top-level task. The instance takes ownership.
 - `+addObserver(observer : TaskObserver*) : void` NV — Keeps an observer alive for as long as the instance exists.
@@ -463,7 +464,7 @@ The UI only calls `WorkflowEngine`. The engine checks ids and passes the work on
 Attributes:
 - `-registry : ParticipantRegistry*` (owned) — The people in the system.
 - `-leastLoaded : LeastLoadedAssignment*` (owned) — The least-busy rule.
-- `-assignment : RoleBasedAssignment*` (owned) — Wraps `leastLoaded` to start at the lowest level.
+- `-assignment : RoleBasedAssignment*` (owned) — Wraps `leastLoaded`.
 - `-approvals : ApprovalService*` (owned) — Handles approval requests.
 - `-runner : WorkflowRunner*` (owned) — Runs tasks and statuses.
 - `-history : SnapshotHistory*` (owned) — Stored snapshots.
@@ -480,7 +481,7 @@ Methods:
 - `+registerDefinition(definition : WorkflowDefinition*) : void` NV — Stores a process map. Refused if the name is taken.
 - `+startInstance(definitionName : const string&, name : const string&, data : const DataMap&) : WorkflowInstance*` NV — Creates an instance with its input data and asks the runner to create its first tasks.
 - `+findInstance(id : int) : WorkflowInstance*` NV *(const)* — Returns the instance with that id, or `nullptr`.
-- `+dashboardFor(participantId : int) : PendingTaskIterator` NV *(const)* — Builds a `PendingTaskIterator` over all instances for that person. The dashboard uses this to list the tasks the person can start.
+- `+dashboardFor(participantId : int) : PendingTaskIterator` NV — Builds a `PendingTaskIterator` over all instances for that person. The dashboard uses this to list the tasks the person can start.
 - `+startTask(instanceId : int, taskId : int, participantId : int) : void` NV — Finds the three objects, then the runner starts the task.
 - `+completeTask(instanceId : int, taskId : int, participantId : int) : void` NV — Finds the three objects, then the runner completes the task.
 - `+cancelInstance(instanceId : int) : void` NV — Finds the instance, then the runner cancels it.
@@ -514,15 +515,12 @@ Methods:
 - `+advance(instance, top : TaskComponent*) : void` NV — Called by `CompletionObserver`. If the top task is not completed yet, it waits. Otherwise it cancels the other open top-level tasks, moves the instance to the row's status, logs it, and creates the next tasks.
 - `+cancelInstance(instance : WorkflowInstance&) : void` NV — Cancels every open task, releases each from its person, sets the status to Cancelled and logs it.
 - `-spawnTasks(instance : WorkflowInstance&) : void` NV — Creates the tasks for the instance's current status. It takes the rows from `rulesFrom`, keeps one row per distinct action (the first one), and creates a task from that row's role, due days and parallel subtasks. If there are no rows, logs `InstanceFinished`.
-  - An automated row creates an automated task, runs it, moves the status on, and checks again.
-  - A row without subtasks creates one human task at the lowest level that has someone, with a due date from today plus `dueDays`. If nobody is found, it stays unassigned and this is logged.
-  - A row with subtasks creates a composite with one human task for each subtask name.
+  - **An automated row** creates an automated task, runs it, moves the status on, and checks again.
+  - **A row without subtasks** creates one human task, but **always assigns it to Level 1** (`Role(1, "")`), regardless of the row's required role. The due date is calculated from today plus `dueDays`. If nobody is found, it stays unassigned and this is logged.
+  - **A row with subtasks** creates a composite with one human task for each subtask name, again **always assigning each to Level 1**.
   - Each human task gets a `CompletionObserver` and an `AuditObserver`, added to the instance.
 
 Decorators are not created here. The UI builds them when it draws a task.
-
-### ApprovalService
-Covered in section 6.
 
 ---
 
@@ -544,7 +542,7 @@ Attributes:
 
 Methods:
 - `+saveSnapshot(snapshot : WorkflowSnapshot*) : void` NV — Stores the snapshot. The history takes ownership.
-- `+restoreSnapshot(index : int) : const WorkflowSnapshot&` NV *(const)* — Returns the snapshot at that position.
+- `+restoreSnapshot(index : int) : const WorkflowSnapshot&` NV *(const)* — Returns the snapshot at that position. Throws if the index is out of range.
 - `+count() : int` NV *(const)* — Returns how many snapshots are stored.
 
 ---
@@ -620,14 +618,15 @@ The engine never compares a status or action name to a fixed value. The only fix
 - Keep `ProcessDirector` as a separate class that runs the build steps in order.
 - Parallel subtasks are in the demo. A composite only sits at the top level.
 - Decorators are name labels only: `PriorityDecorator`, `DueSoonDecorator`, `ApprovalPendingDecorator`. They are created when a row is drawn.
-- `WorkflowEngine` is a simple facade over `WorkflowRunner` and `ApprovalService`. It also calls `SnapshotHistory`.
+- `WorkflowEngine` is a facade over `WorkflowRunner` and `ApprovalService`. It also calls `SnapshotHistory`.
 - Four states: Pending, InProgress, Completed, Cancelled.
 - Least-loaded assignment is used for picking someone at a level.
 - The audit log is written by `AuditObserver`.
 - Overdue tasks are shown with a label only. Nothing escalates or reassigns them.
 - `DueDateIterator` sorts its copy and walks it. It is used to order tasks by priority and due date.
-- `PendingTaskIterator` is used by the person's dashboard. It lists only Pending tasks assigned to that person, across all instances. InProgress tasks are not included.
+- `PendingTaskIterator` is used by the person's dashboard. It lists only Pending tasks assigned to that person, across all instances.
 - The approval chain goes one level at a time, and is rebuilt whenever a person is added. The last handler (`FallbackHandler`) rejects the request.
+- **Tasks are always assigned to Level 1 on creation.** If the task requires higher authority, the Level 1 assignee must request approval. The approval chain offers the request to higher levels, who can accept it (if authorized) or pass it up. If the request reaches the top and is passed up again, the task remains with the Level 1 assignee.
 - Save and restore are in the demo, so Memento counts toward the design.
 
 ---
@@ -639,15 +638,13 @@ Eleven GoF patterns are used. Each category has at least two. Five are on the sp
 | Category | Pattern | Classes |
 |---|---|---|
 | Creational | Factory Method | `TaskCreator`, `HumanTaskCreator`, `AutomatedTaskCreator` |
-| Creational | Builder | `TaskBuilder`, `HumanTaskBuilder`, `ProcessDirector` |
+| Creational | Builder *(required)* | `TaskBuilder`, `HumanTaskBuilder`, `ProcessDirector` |
 | Structural | Composite | `TaskComponent`, `TaskComposite`, `HumanTask`, `AutomatedTask` |
 | Structural | Decorator | `Decorator`, `PriorityDecorator`, `DueSoonDecorator`, `ApprovalPendingDecorator` |
-| Structural | Facade | `WorkflowEngine` |
+| Structural | Facade *(required)* | `WorkflowEngine` |
 | Behavioural | State | `TaskStates` and the four state classes |
 | Behavioural | Strategy | `AssignmentRule`, `LeastLoadedAssignment`, `RoleBasedAssignment` |
-| Behavioural | Observer | `HumanTask` (subject), `TaskObserver`, `CompletionObserver`, `AuditObserver` |
-| Behavioural | Iterator | `Iterator`, `PendingTaskIterator`, `DueDateIterator` |
-| Behavioural | Chain of Responsibility | `RequestHandler`, `RoleTierHandler`, `FallbackHandler` |
+| Behavioural | Observer *(required)* | `HumanTask` (subject), `TaskObserver`, `CompletionObserver`, `AuditObserver` |
+| Behavioural | Iterator *(required)* | `Iterator`, `PendingTaskIterator`, `DueDateIterator` |
+| Behavioural | Chain of Responsibility *(required)* | `RequestHandler`, `RoleTierHandler`, `FallbackHandler` |
 | Behavioural | Memento | `WorkflowSnapshot`, `SnapshotHistory` |
-
----
