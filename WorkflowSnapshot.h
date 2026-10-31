@@ -2,7 +2,6 @@
 #define TIVIDY_WORKFLOWSNAPSHOT_H
 
 #include <string>
-#include "TaskComponent.h"
 
 class WorkflowSnapshot
 {
@@ -11,7 +10,6 @@ public:
     std::string getTimestamp() const;
     std::string getTasksData() const;
 
-    friend class TaskComponent;
 private:
     std::string timestamp;
     std::string tasksData;
