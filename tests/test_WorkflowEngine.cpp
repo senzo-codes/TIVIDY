@@ -41,3 +41,24 @@ TEST_CASE("completeTask completes the task and moves the status", "[completeTask
     REQUIRE(inst.getStatus() == "Assessed");
     REQUIRE(reg.openTaskCount(1) == 0);
 }
+
+TEST_CASE("negative due days create an already overdue task", "[dueDate]") {
+    ParticipantRegistry reg;
+    reg.add(new Participant(1, "Ann", Role(1, "Clerk")));
+    LeastLoadedAssignment least(&reg);
+    RoleBasedAssignment assignment(&reg, &least);
+    ApprovalService approvals(&reg, &least);
+    WorkflowRunner runner(&reg, &assignment, &approvals);
+    runner.setToday("2026-10-28");
+
+    std::vector<std::string> none;
+    WorkflowDefinition def("Claim", "Reported");
+    def.addRule(TransitionRule("Reported", "Urgent review", "Reviewed",
+                               Role(1, "Clerk"), "", "", -3, none));
+    WorkflowInstance inst(1, "Claim 1", &def);
+
+    runner.start(inst);
+
+    REQUIRE(inst.getTasks().size() == 1);
+    REQUIRE(inst.getTasks()[0]->getDueDate() == "2026-10-25");
+}
