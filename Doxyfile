@@ -1,0 +1,20 @@
+# Doxyfile 1.18.0
+
+PROJECT_NAME           = "TIVIDY"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = .
+RECURSIVE              = YES
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = NO
+
+HAVE_DOT               = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES
