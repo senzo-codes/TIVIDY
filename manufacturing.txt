@@ -1,0 +1,16 @@
+# Manufacturing and shipping a widget: workflow file
+
+workflow,Manufacturing and shipping,Producing
+
+person,1,Tebello,1,ProductionWorker
+person,4,Lium,2,Assembler
+person,6,Senzo,3,Manager
+person,7,Livhu,4,Courier
+
+rule,Produce,Making our physical widget,Produced,2,,,2,[] 
+rule,Produce,Making our Electronic widget component,Produced,2,,,1,[]
+rule,Produced,Assemble a physical and it's electronic component,Assembled,3,,,2,[]
+rule,Assembled,Inspect widget,No defects,4,,,1,[]
+rule,Assembled,Inspect widget,Has defects,3,defaulDetected,yes,1,[]
+rule,Deciding,Checking widget standards,Standards met,4,,,1[]
+rule,Deciding,Checking widget standards,Standards not met,3,standardNotMet,yes,1[]

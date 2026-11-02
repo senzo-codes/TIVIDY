@@ -1,0 +1,4 @@
+widgetId,widgetType,defectDetected,productionDate,ProductDescription,standardNotMet
+WID-0001,1,yes,2026-10-30,Physical widget,no
+WID-0002,1,no,2026-10-30,Physical widget,no
+WID-0003,2,no,2026-10-31,Electronic component,no
