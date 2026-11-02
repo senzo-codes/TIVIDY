@@ -1,16 +1,21 @@
-# Manufacturing and shipping a widget: workflow file
-
-workflow,Manufacturing and shipping,Producing
-
-person,1,Tebello,1,ProductionWorker
-person,4,Lium,2,Assembler
-person,6,Senzo,3,Manager
-person,7,Livhu,4,Courier
-
-rule,Produce,Making our physical widget,Produced,2,,,2,[] 
-rule,Produce,Making our Electronic widget component,Produced,2,,,1,[]
-rule,Produced,Assemble a physical and it's electronic component,Assembled,3,,,2,[]
-rule,Assembled,Inspect widget,No defects,4,,,1,[]
-rule,Assembled,Inspect widget,Has defects,3,defaulDetected,yes,1,[]
-rule,Deciding,Checking widget standards,Standards met,4,,,1[]
-rule,Deciding,Checking widget standards,Standards not met,3,standardNotMet,yes,1[]
+workflow,Manufacturing activity,Producing
+ 
+person,1,Tebello,1,Proposal Owner
+person,2,Thabo,1,Proposal Owner
+person,3,Lium,2,Quote Owner
+ 
+# Start task: Machining and Coating run in parallel (fork and join)
+rule,Producing,Produce order,Produced,1,,,2,[Machining;Coating]
+ 
+# Inspect quality, then Passed? (No: Flag Rework loops back, Yes: Request Approval)
+rule,Produced,Inspect quality,Inspected,1,,,1,[]
+rule,Inspected,Pass inspection,Passed,1,,,1,[]
+rule,Inspected,Flag rework,Producing,1,,,1,[]
+ 
+# Request_Approval: level 2 tasks start with the Proposal Owner, who asks the Quote Owner (Approved?)
+rule,Passed,Approve order,Approved,2,,,2,[]
+rule,Passed,Reject order,Rejected,2,,,2,[]
+ 
+# Approved: Ship order, then Completed
+rule,Approved,Ship order,Completed,1,,,2,[]
+ 
